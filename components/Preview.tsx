@@ -1,5 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
+import { resolveMarkdownImages } from '../services/imageService';
 
 // TypeScript declarations for libraries loaded from CDN
 declare global {
@@ -22,7 +22,8 @@ const Preview: React.FC<PreviewProps> = ({ markdown }) => {
 
     useEffect(() => {
         if (window.marked && window.DOMPurify) {
-            const rawHtml = window.marked.parse(markdown);
+            const resolvedMarkdown = resolveMarkdownImages(markdown);
+            const rawHtml = window.marked.parse(resolvedMarkdown);
             const sanitizedHtml = window.DOMPurify.sanitize(rawHtml);
             setRenderedHtml(sanitizedHtml);
         }

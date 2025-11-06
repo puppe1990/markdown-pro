@@ -1,3 +1,4 @@
+import { resolveMarkdownImages } from './imageService';
 
 // TypeScript declarations for libraries loaded from CDN
 declare var htmlToDocx: any;
@@ -6,7 +7,8 @@ declare var html2canvas: any;
 declare var saveAs: any;
 
 export const exportAsMarkdown = (content: string, filename: string) => {
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const resolvedContent = resolveMarkdownImages(content);
+    const blob = new Blob([resolvedContent], { type: 'text/markdown;charset=utf-8' });
     saveAs(blob, filename);
 };
 
