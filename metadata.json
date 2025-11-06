@@ -1,0 +1,5 @@
+{
+  "name": "Markdown Pro",
+  "description": "A comprehensive markdown editor that allows users to create, edit, and export content in multiple formats including Markdown (.md), PDF, and Word (.docx). It features a live preview, formatting tools, autosave, version history, and customizable themes.",
+  "requestFramePermissions": []
+}
