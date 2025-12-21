@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { SunIcon, MoonIcon, ClockIcon, DownloadIcon, UploadIcon, FileTextIcon, FileIcon, FileImage } from './icons';
+import { SunIcon, MoonIcon, ClockIcon, DownloadIcon, UploadIcon, CopyIcon, CheckIcon, FileTextIcon, FileIcon, FileImage } from './icons';
 import { exportAsMarkdown, exportAsPdf, exportAsDocx } from '../services/exportService';
 
 interface HeaderProps {
@@ -13,6 +13,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, markdownContent, onImportMarkdown }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
     const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,6 +60,36 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, mar
             event.target.value = '';
         }
     };
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(markdownContent);
+            setIsCopied(true);
+            setTimeout(() => {
+                setIsCopied(false);
+            }, 2000);
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = markdownContent;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                setIsCopied(true);
+                setTimeout(() => {
+                    setIsCopied(false);
+                }, 2000);
+            } catch (err) {
+                alert('Failed to copy markdown to clipboard');
+            }
+            document.body.removeChild(textArea);
+        }
+    };
     
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -91,6 +122,17 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, mar
                     className="hidden"
                     aria-hidden="true"
                 />
+                <button
+                    onClick={handleCopy}
+                    className={`p-2.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${
+                        isCopied 
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' 
+                            : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+                    }`}
+                    title={isCopied ? "Copied!" : "Copy Markdown"}
+                >
+                    {isCopied ? <CheckIcon className="w-5 h-5" /> : <CopyIcon className="w-5 h-5" />}
+                </button>
                 <button
                     onClick={onHistoryClick}
                     className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
