@@ -105,7 +105,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ textareaRef, setMarkdown }) => {
 
 
     return (
-        <div className="flex items-center p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 space-x-1">
+        <div className="flex items-center px-4 py-3 border-b border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm space-x-1.5">
             {buttons.map(btn => (
                 <button
                     key={btn.title}
@@ -116,10 +116,12 @@ const Toolbar: React.FC<ToolbarProps> = ({ textareaRef, setMarkdown }) => {
                             imageInputRef.current?.click();
                         }
                     }}
-                    className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                    className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all duration-200 hover:scale-105 active:scale-95 group"
                     title={btn.title}
                 >
-                    {btn.icon}
+                    <span className="group-hover:scale-110 transition-transform duration-200 inline-block">
+                        {btn.icon}
+                    </span>
                 </button>
             ))}
              <input

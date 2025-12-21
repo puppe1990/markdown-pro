@@ -55,7 +55,7 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col h-screen font-sans">
+        <div className="flex flex-col h-screen font-sans antialiased bg-gray-50 dark:bg-gray-950">
             <Header 
                 theme={theme} 
                 toggleTheme={toggleTheme}
@@ -63,16 +63,24 @@ const App: React.FC = () => {
                 markdownContent={markdown}
             />
             <main className="flex-grow flex flex-col md:flex-row overflow-hidden">
-                <div className="md:hidden flex border-b border-gray-200 dark:border-gray-700">
+                <div className="md:hidden flex border-b border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                     <button 
                         onClick={() => setActiveView('editor')}
-                        className={`flex-1 p-3 text-sm font-medium ${activeView === 'editor' ? 'bg-gray-100 dark:bg-gray-800 text-blue-500' : 'bg-white dark:bg-gray-900'}`}
+                        className={`flex-1 p-4 text-sm font-semibold transition-all duration-200 ${
+                            activeView === 'editor' 
+                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                                : 'bg-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
                     >
                         Write
                     </button>
                     <button 
                         onClick={() => setActiveView('preview')}
-                        className={`flex-1 p-3 text-sm font-medium ${activeView === 'preview' ? 'bg-gray-100 dark:bg-gray-800 text-blue-500' : 'bg-white dark:bg-gray-900'}`}
+                        className={`flex-1 p-4 text-sm font-semibold transition-all duration-200 ${
+                            activeView === 'preview' 
+                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                                : 'bg-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
                     >
                         Preview
                     </button>
@@ -81,7 +89,7 @@ const App: React.FC = () => {
                 <div className={`w-full h-full ${activeView === 'editor' ? 'block' : 'hidden'} md:block md:w-1/2`}>
                     <Editor value={markdown} onChange={handleSetMarkdown} />
                 </div>
-                <div className={`w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'} md:block md:w-1/2 border-l border-gray-200 dark:border-gray-700`}>
+                <div className={`w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'} md:block md:w-1/2 border-l border-gray-200/60 dark:border-gray-700/60`}>
                     <Preview markdown={markdown} />
                 </div>
             </main>
