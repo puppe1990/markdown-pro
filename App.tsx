@@ -61,6 +61,10 @@ const App: React.FC = () => {
                 toggleTheme={toggleTheme}
                 onHistoryClick={() => setIsHistoryPanelOpen(true)}
                 markdownContent={markdown}
+                onImportMarkdown={(content) => {
+                    setMarkdown(content);
+                    saveVersion(content);
+                }}
             />
             <main className="flex-grow flex flex-col md:flex-row overflow-hidden">
                 <div className="md:hidden flex border-b border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">

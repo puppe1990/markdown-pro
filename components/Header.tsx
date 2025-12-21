@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { SunIcon, MoonIcon, ClockIcon, DownloadIcon, FileTextIcon, FileIcon, FileImage } from './icons';
+import { SunIcon, MoonIcon, ClockIcon, DownloadIcon, UploadIcon, FileTextIcon, FileIcon, FileImage } from './icons';
 import { exportAsMarkdown, exportAsPdf, exportAsDocx } from '../services/exportService';
 
 interface HeaderProps {
@@ -8,11 +8,13 @@ interface HeaderProps {
     toggleTheme: () => void;
     onHistoryClick: () => void;
     markdownContent: string;
+    onImportMarkdown: (content: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, markdownContent }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, markdownContent, onImportMarkdown }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
+    const importInputRef = useRef<HTMLInputElement>(null);
 
     const handleExport = (format: 'md' | 'pdf' | 'docx') => {
         const filename = `document-${new Date().toISOString().split('T')[0]}`;
@@ -28,6 +30,34 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, mar
                 break;
         }
         setIsExportMenuOpen(false);
+    };
+
+    const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Check if file is markdown
+        if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
+            alert('Please select a valid Markdown file (.md or .markdown)');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target?.result as string;
+            if (content) {
+                onImportMarkdown(content);
+            }
+        };
+        reader.onerror = () => {
+            alert('An error occurred while reading the file.');
+        };
+        reader.readAsText(file);
+
+        // Reset input to allow selecting the same file again
+        if (event.target) {
+            event.target.value = '';
+        }
     };
     
     useEffect(() => {
@@ -46,6 +76,21 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, mar
                 Markdown <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">Pro</span>
             </h1>
             <div className="flex items-center space-x-3">
+                <button
+                    onClick={() => importInputRef.current?.click()}
+                    className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                    title="Import Markdown"
+                >
+                    <UploadIcon className="w-5 h-5" />
+                </button>
+                <input
+                    type="file"
+                    ref={importInputRef}
+                    onChange={handleImport}
+                    accept=".md,.markdown"
+                    className="hidden"
+                    aria-hidden="true"
+                />
                 <button
                     onClick={onHistoryClick}
                     className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
