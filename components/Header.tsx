@@ -1,17 +1,19 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { SunIcon, MoonIcon, ClockIcon, DownloadIcon, UploadIcon, CopyIcon, CheckIcon, FileTextIcon, FileIcon, FileImage } from './icons';
+import { SunIcon, MoonIcon, ClockIcon, DownloadIcon, UploadIcon, CopyIcon, CheckIcon, FileTextIcon, FileIcon, FileImage, BookOpenIcon } from './icons';
 import { exportAsMarkdown, exportAsPdf, exportAsDocx } from '../services/exportService';
 
 interface HeaderProps {
     theme: 'light' | 'dark';
     toggleTheme: () => void;
     onHistoryClick: () => void;
+    onReadingModeToggle: () => void;
+    isReadingMode: boolean;
     markdownContent: string;
     onImportMarkdown: (content: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, markdownContent, onImportMarkdown }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, onReadingModeToggle, isReadingMode, markdownContent, onImportMarkdown }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -139,6 +141,17 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, mar
                     title="Version History"
                 >
                     <ClockIcon className="w-5 h-5" />
+                </button>
+                <button
+                    onClick={onReadingModeToggle}
+                    className={`p-2.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${
+                        isReadingMode
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                            : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+                    }`}
+                    title={isReadingMode ? "Exit Reading Mode" : "Reading Mode"}
+                >
+                    <BookOpenIcon className="w-5 h-5" />
                 </button>
                 <button
                     onClick={toggleTheme}

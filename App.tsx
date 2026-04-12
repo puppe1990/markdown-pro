@@ -13,6 +13,7 @@ const App: React.FC = () => {
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
     const [activeView, setActiveView] = useState<'editor' | 'preview'>('editor');
+    const [isReadingMode, setIsReadingMode] = useState(false);
 
     const { versions, saveVersion, revertToVersion } = useVersionHistory(setMarkdown);
     useAutosave(markdown, 1000);
@@ -56,10 +57,12 @@ const App: React.FC = () => {
 
     return (
         <div className="flex flex-col h-screen font-sans antialiased bg-gray-50 dark:bg-gray-950">
-            <Header 
-                theme={theme} 
+            <Header
+                theme={theme}
                 toggleTheme={toggleTheme}
                 onHistoryClick={() => setIsHistoryPanelOpen(true)}
+                onReadingModeToggle={() => setIsReadingMode(!isReadingMode)}
+                isReadingMode={isReadingMode}
                 markdownContent={markdown}
                 onImportMarkdown={(content) => {
                     setMarkdown(content);
@@ -90,10 +93,10 @@ const App: React.FC = () => {
                     </button>
                 </div>
 
-                <div className={`w-full h-full ${activeView === 'editor' ? 'block' : 'hidden'} md:block md:w-1/2`}>
+                <div className={`w-full h-full ${activeView === 'editor' ? 'block' : 'hidden'} md:block md:w-1/2 ${isReadingMode ? '!hidden' : ''}`}>
                     <Editor value={markdown} onChange={handleSetMarkdown} />
                 </div>
-                <div className={`w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'} md:block md:w-1/2 border-l border-gray-200/60 dark:border-gray-700/60`}>
+                <div className={`w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'} md:block ${isReadingMode ? '!w-full !block' : 'md:w-1/2'} border-l border-gray-200/60 dark:border-gray-700/60`}>
                     <Preview markdown={markdown} />
                 </div>
             </main>
