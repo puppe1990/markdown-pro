@@ -15,7 +15,9 @@ const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
         const textarea = textareaRef.current;
         if (!textarea) return;
 
-        const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+        const imageFiles = files.filter((file) =>
+            file.type.startsWith('image/'),
+        );
         if (imageFiles.length === 0) return;
 
         const start = textarea.selectionStart;
@@ -26,9 +28,12 @@ const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
             const imageMarkdowns = await Promise.all(
                 imageFiles.map(async (file, index) => {
                     const imageId = await addImage(file);
-                    const altText = imageFiles.length === 1 && selectedText ? selectedText : file.name;
+                    const altText =
+                        imageFiles.length === 1 && selectedText
+                            ? selectedText
+                            : file.name;
                     return `![${altText || `image-${index + 1}`}](${imageId})`;
-                })
+                }),
             );
 
             const imagesBlock = imageMarkdowns.join('\n');
@@ -53,8 +58,12 @@ const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
         await insertImageFiles(files);
     };
 
-    const handlePaste = async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-        const files = Array.from(event.clipboardData.files || []).filter((file) => file.type.startsWith('image/'));
+    const handlePaste = async (
+        event: React.ClipboardEvent<HTMLTextAreaElement>,
+    ) => {
+        const files = Array.from(event.clipboardData.files || []).filter(
+            (file) => file.type.startsWith('image/'),
+        );
         if (files.length === 0) return;
 
         event.preventDefault();
