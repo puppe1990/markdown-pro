@@ -41,6 +41,19 @@ const TabBar: React.FC<Props> = ({
         setEditingId(null);
     };
 
+    const handleClose = (tab: Tab) => {
+        if (
+            tab.content.trim() &&
+            !window.confirm(
+                'This tab has content. Are you sure you want to close it?',
+            )
+        ) {
+            return;
+        }
+
+        onClose(tab.id);
+    };
+
     return (
         <div className="flex items-center overflow-x-auto border-b border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm min-h-[40px]">
             {tabs.map((tab) => (
@@ -81,7 +94,7 @@ const TabBar: React.FC<Props> = ({
                         aria-label="close tab"
                         onClick={(e) => {
                             e.stopPropagation();
-                            onClose(tab.id);
+                            handleClose(tab);
                         }}
                         className="opacity-0 group-hover:opacity-100 ml-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 w-4 h-4 flex items-center justify-center text-xs leading-none"
                     >

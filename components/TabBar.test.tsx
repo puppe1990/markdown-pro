@@ -59,6 +59,8 @@ describe('TabBar', () => {
 
     it('calls onClose when close button clicked', async () => {
         const onClose = vi.fn();
+        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
         render(
             <TabBar
                 tabs={tabs}
@@ -73,7 +75,68 @@ describe('TabBar', () => {
             name: /close tab/i,
         });
         await userEvent.click(closeButtons[0]);
+        expect(confirmSpy).toHaveBeenCalled();
         expect(onClose).toHaveBeenCalledWith('1');
+
+        confirmSpy.mockRestore();
+    });
+
+    it('asks for confirmation before closing a tab with content', async () => {
+        const onClose = vi.fn();
+        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+        render(
+            <TabBar
+                tabs={tabs}
+                activeTabId="1"
+                onSelect={vi.fn()}
+                onAdd={vi.fn()}
+                onClose={onClose}
+                onRename={vi.fn()}
+            />,
+        );
+
+        const closeButtons = screen.getAllByRole('button', {
+            name: /close tab/i,
+        });
+
+        await userEvent.click(closeButtons[0]);
+
+        expect(confirmSpy).toHaveBeenCalled();
+        expect(onClose).not.toHaveBeenCalled();
+
+        confirmSpy.mockRestore();
+    });
+
+    it('closes without confirmation when tab is empty', async () => {
+        const onClose = vi.fn();
+        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+        const emptyTabs: Tab[] = [
+            { id: '1', name: 'Notes', content: '' },
+            { id: '2', name: 'Draft', content: '# Draft' },
+        ];
+
+        render(
+            <TabBar
+                tabs={emptyTabs}
+                activeTabId="1"
+                onSelect={vi.fn()}
+                onAdd={vi.fn()}
+                onClose={onClose}
+                onRename={vi.fn()}
+            />,
+        );
+
+        const closeButtons = screen.getAllByRole('button', {
+            name: /close tab/i,
+        });
+
+        await userEvent.click(closeButtons[0]);
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(onClose).toHaveBeenCalledWith('1');
+
+        confirmSpy.mockRestore();
     });
 
     it('enters rename mode on double-click and calls onRename on blur', async () => {
