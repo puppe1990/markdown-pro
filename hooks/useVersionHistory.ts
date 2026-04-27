@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Version } from '../types';
 
@@ -23,7 +22,10 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
 
     const saveVersionsToLocalStorage = (newVersions: Version[]) => {
         try {
-            localStorage.setItem('markdown-versions', JSON.stringify(newVersions));
+            localStorage.setItem(
+                'markdown-versions',
+                JSON.stringify(newVersions),
+            );
         } catch (error) {
             console.error('Failed to save version history:', error);
         }
@@ -33,9 +35,9 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
         }
-        
+
         saveTimeoutRef.current = window.setTimeout(() => {
-            setVersions(prevVersions => {
+            setVersions((prevVersions) => {
                 const latestVersion = prevVersions[0];
                 if (latestVersion && latestVersion.content === content) {
                     return prevVersions;
@@ -53,12 +55,15 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
         }, 2000); // Debounce saving by 2 seconds
     }, []);
 
-    const revertToVersion = useCallback((versionIndex: number) => {
-        const versionToRevert = versions[versionIndex];
-        if (versionToRevert) {
-            setMarkdown(versionToRevert.content);
-        }
-    }, [versions, setMarkdown]);
-    
+    const revertToVersion = useCallback(
+        (versionIndex: number) => {
+            const versionToRevert = versions[versionIndex];
+            if (versionToRevert) {
+                setMarkdown(versionToRevert.content);
+            }
+        },
+        [versions, setMarkdown],
+    );
+
     return { versions, saveVersion, revertToVersion };
 };

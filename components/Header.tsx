@@ -1,7 +1,22 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { SunIcon, MoonIcon, ClockIcon, DownloadIcon, UploadIcon, CopyIcon, CheckIcon, FileTextIcon, FileIcon, FileImage, BookOpenIcon } from './icons';
-import { exportAsMarkdown, exportAsPdf, exportAsDocx } from '../services/exportService';
+import {
+    SunIcon,
+    MoonIcon,
+    ClockIcon,
+    DownloadIcon,
+    UploadIcon,
+    CopyIcon,
+    CheckIcon,
+    FileTextIcon,
+    FileIcon,
+    FileImage,
+    BookOpenIcon,
+} from './icons';
+import {
+    exportAsMarkdown,
+    exportAsPdf,
+    exportAsDocx,
+} from '../services/exportService';
 
 interface HeaderProps {
     theme: 'light' | 'dark';
@@ -11,16 +26,30 @@ interface HeaderProps {
     isReadingMode: boolean;
     markdownContent: string;
     onImportMarkdown: (content: string) => void;
+    tabName?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, onReadingModeToggle, isReadingMode, markdownContent, onImportMarkdown }) => {
+const Header: React.FC<HeaderProps> = ({
+    theme,
+    toggleTheme,
+    onHistoryClick,
+    onReadingModeToggle,
+    isReadingMode,
+    markdownContent,
+    onImportMarkdown,
+    tabName,
+}) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
     const importInputRef = useRef<HTMLInputElement>(null);
 
     const handleExport = (format: 'md' | 'pdf' | 'docx') => {
-        const filename = `document-${new Date().toISOString().split('T')[0]}`;
+        const slug = (tabName ?? 'document')
+            .replace(/[^a-z0-9]/gi, '-')
+            .toLowerCase();
+        const filename =
+            slug || `document-${new Date().toISOString().split('T')[0]}`;
         switch (format) {
             case 'md':
                 exportAsMarkdown(markdownContent, `${filename}.md`);
@@ -70,7 +99,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, onR
             setTimeout(() => {
                 setIsCopied(false);
             }, 2000);
-        } catch (err) {
+        } catch {
             // Fallback for older browsers
             const textArea = document.createElement('textarea');
             textArea.value = markdownContent;
@@ -86,27 +115,34 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, onR
                 setTimeout(() => {
                     setIsCopied(false);
                 }, 2000);
-            } catch (err) {
+            } catch {
                 alert('Failed to copy markdown to clipboard');
             }
             document.body.removeChild(textArea);
         }
     };
-    
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(event.target as Node)
+            ) {
                 setIsExportMenuOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     return (
         <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200/60 dark:border-gray-700/60 bg-gradient-to-r from-white via-gray-50/50 to-white dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex-shrink-0 shadow-sm backdrop-blur-sm">
             <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-gray-100 dark:via-gray-200 dark:to-gray-100 bg-clip-text text-transparent">
-                Markdown <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">Pro</span>
+                Markdown{' '}
+                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                    Pro
+                </span>
             </h1>
             <div className="flex items-center space-x-3">
                 <button
@@ -127,13 +163,17 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, onR
                 <button
                     onClick={handleCopy}
                     className={`p-2.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${
-                        isCopied 
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' 
+                        isCopied
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                             : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                     }`}
-                    title={isCopied ? "Copied!" : "Copy Markdown"}
+                    title={isCopied ? 'Copied!' : 'Copy Markdown'}
                 >
-                    {isCopied ? <CheckIcon className="w-5 h-5" /> : <CopyIcon className="w-5 h-5" />}
+                    {isCopied ? (
+                        <CheckIcon className="w-5 h-5" />
+                    ) : (
+                        <CopyIcon className="w-5 h-5" />
+                    )}
                 </button>
                 <button
                     onClick={onHistoryClick}
@@ -149,7 +189,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, onR
                             ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                             : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                     }`}
-                    title={isReadingMode ? "Exit Reading Mode" : "Reading Mode"}
+                    title={isReadingMode ? 'Exit Reading Mode' : 'Reading Mode'}
                 >
                     <BookOpenIcon className="w-5 h-5" />
                 </button>
@@ -158,7 +198,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, onR
                     className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
                     title="Toggle Theme"
                 >
-                    {theme === 'light' ? <MoonIcon className="w-5 h-5" /> : <SunIcon className="w-5 h-5" />}
+                    {theme === 'light' ? (
+                        <MoonIcon className="w-5 h-5" />
+                    ) : (
+                        <SunIcon className="w-5 h-5" />
+                    )}
                 </button>
                 <div className="relative" ref={exportMenuRef}>
                     <button
@@ -171,17 +215,32 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onHistoryClick, onR
                     </button>
                     {isExportMenuOpen && (
                         <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 z-10 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-200">
-                            <button onClick={() => handleExport('md')} className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg">
+                            <button
+                                onClick={() => handleExport('md')}
+                                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg"
+                            >
                                 <FileTextIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                <span className="font-medium">Markdown (.md)</span>
+                                <span className="font-medium">
+                                    Markdown (.md)
+                                </span>
                             </button>
-                            <button onClick={() => handleExport('pdf')} className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg">
+                            <button
+                                onClick={() => handleExport('pdf')}
+                                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg"
+                            >
                                 <FileImage className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                <span className="font-medium">PDF Document</span>
+                                <span className="font-medium">
+                                    PDF Document
+                                </span>
                             </button>
-                            <button onClick={() => handleExport('docx')} className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg">
+                            <button
+                                onClick={() => handleExport('docx')}
+                                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg"
+                            >
                                 <FileIcon className="w-4 h-4 text-blue-700 dark:text-blue-500" />
-                                <span className="font-medium">Word Document</span>
+                                <span className="font-medium">
+                                    Word Document
+                                </span>
                             </button>
                         </div>
                     )}
