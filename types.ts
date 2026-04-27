@@ -1,5 +1,4 @@
-
 export interface Version {
-  content: string;
-  timestamp: number;
+    content: string;
+    timestamp: number;
 }

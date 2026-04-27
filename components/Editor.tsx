@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import Toolbar from './Toolbar';
 import { addImage } from '../services/imageService';

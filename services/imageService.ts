@@ -28,11 +28,11 @@ export const addImage = (file: File): Promise<string> => {
             const dataUrl = reader.result as string;
             // Create a unique ID for the image reference
             const imageId = `image-ref://${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-            
+
             const store = getImageStore();
             store[imageId] = dataUrl;
             saveImageStore(store);
-            
+
             resolve(imageId);
         };
         reader.onerror = (error) => reject(error);
@@ -46,17 +46,20 @@ export const resolveMarkdownImages = (markdown: string): string => {
     if (Object.keys(store).length === 0) {
         return markdown;
     }
-    
+
     // Use a regex to find all markdown image tags with our custom 'image-ref://' protocol
-    const resolvedMarkdown = markdown.replace(/!\[(.*?)\]\((image-ref:\/\/[^)]+)\)/g, (match, altText, imageId) => {
-        const dataUrl = store[imageId];
-        if (dataUrl) {
-            // If found in the store, replace the reference with the actual data URL
-            return `![${altText}](${dataUrl})`;
-        }
-        // If for some reason the image is not in the store, leave the original reference to avoid breaking the text
-        return match; 
-    });
+    const resolvedMarkdown = markdown.replace(
+        /!\[(.*?)\]\((image-ref:\/\/[^)]+)\)/g,
+        (match, altText, imageId) => {
+            const dataUrl = store[imageId];
+            if (dataUrl) {
+                // If found in the store, replace the reference with the actual data URL
+                return `![${altText}](${dataUrl})`;
+            }
+            // If for some reason the image is not in the store, leave the original reference to avoid breaking the text
+            return match;
+        },
+    );
 
     return resolvedMarkdown;
 };
