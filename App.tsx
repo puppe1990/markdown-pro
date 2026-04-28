@@ -4,7 +4,6 @@ import Editor from './components/Editor';
 import Preview from './components/Preview';
 import TabBar from './components/TabBar';
 import VersionHistoryPanel from './components/VersionHistoryPanel';
-import { useAutosave } from './hooks/useAutosave';
 import { useVersionHistory } from './hooks/useVersionHistory';
 import { useTabManager } from './hooks/useTabManager';
 import { Version } from './types';
@@ -32,9 +31,6 @@ const App: React.FC = () => {
     const { versions, saveVersion } = useVersionHistory((content) => {
         updateTabContent(activeTabId, content);
     });
-
-    useAutosave(JSON.stringify(tabs), 1000);
-
     const handleSetMarkdown = useCallback(
         (newContent: string) => {
             updateTabContent(activeTabId, newContent);

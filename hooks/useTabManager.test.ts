@@ -1,8 +1,52 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTabManager } from './useTabManager';
 
 describe('useTabManager', () => {
+    beforeEach(() => {
+        localStorage.clear();
+    });
+
+    it('loads saved tabs from localStorage', () => {
+        localStorage.setItem(
+            'markdown-tabs',
+            JSON.stringify([
+                { id: 'saved-1', name: 'Saved', content: '# Persisted' },
+                { id: 'saved-2', name: 'Draft', content: 'Body' },
+            ]),
+        );
+
+        const { result } = renderHook(() => useTabManager());
+
+        expect(result.current.tabs).toHaveLength(2);
+        expect(result.current.tabs[0]).toEqual({
+            id: 'saved-1',
+            name: 'Saved',
+            content: '# Persisted',
+        });
+        expect(result.current.tabs[1]).toEqual({
+            id: 'saved-2',
+            name: 'Draft',
+            content: 'Body',
+        });
+    });
+
+    it('restores the saved active tab id', () => {
+        localStorage.setItem(
+            'markdown-tabs',
+            JSON.stringify([
+                { id: 'saved-1', name: 'Saved', content: '# Persisted' },
+                { id: 'saved-2', name: 'Draft', content: 'Body' },
+            ]),
+        );
+        localStorage.setItem('markdown-active-tab-id', 'saved-2');
+
+        const { result } = renderHook(() => useTabManager());
+
+        expect(result.current.activeTabId).toBe('saved-2');
+        expect(result.current.activeTab.id).toBe('saved-2');
+    });
+
     it('starts with one default tab', () => {
         const { result } = renderHook(() => useTabManager());
         expect(result.current.tabs).toHaveLength(1);
