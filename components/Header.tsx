@@ -137,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({
     }, []);
 
     return (
-        <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200/60 dark:border-gray-700/60 bg-gradient-to-r from-white via-gray-50/50 to-white dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex-shrink-0 shadow-sm backdrop-blur-sm">
+        <header className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-gray-200/60 dark:border-gray-700/60 bg-gradient-to-r from-white via-gray-50/50 to-white dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex-shrink-0 shadow-sm backdrop-blur-sm">
             <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-gray-100 dark:via-gray-200 dark:to-gray-100 bg-clip-text text-transparent">
                 Markdown{' '}
                 <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
@@ -214,7 +214,7 @@ const Header: React.FC<HeaderProps> = ({
                         <span className="hidden sm:inline">Export</span>
                     </button>
                     {isExportMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 z-10 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 z-50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-200">
                             <button
                                 onClick={() => handleExport('md')}
                                 className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg"
