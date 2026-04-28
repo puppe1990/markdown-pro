@@ -1,19 +1,82 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Markdown Pro
 
-# Run and deploy your AI Studio app
+Markdown Pro is a React + Vite editor focused on writing, previewing, importing, and exporting Markdown documents. The app includes multi-tab editing, version history, reading mode, theme switching, clipboard copy, and export flows for `.md`, `.pdf`, and `.docx`.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/drive/1cCy6EraYRkyAi8rkhKWeeSUrUv7EXRmA
+- React 19
+- TypeScript
+- Vite
+- Vitest + Testing Library
+- ESLint + Prettier
 
-## Run Locally
+## Features
 
-**Prerequisites:** Node.js
+- Live Markdown editing with side-by-side preview
+- Multiple document tabs
+- Version history with revert support
+- Markdown import from local files
+- Export to Markdown, PDF, and DOCX
+- Reading mode and light/dark theme
+- Clipboard copy for the current document
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+ recommended
+- npm
+
+### Install
+
+```bash
+npm install
+```
+
+### Run locally
+
+```bash
+npm run dev
+```
+
+The Vite dev server will print the local URL in the terminal, usually `http://localhost:5173`.
+
+## Scripts
+
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run test
+npm run test:watch
+npm run lint
+npm run lint:fix
+npm run format
+npm run format:check
+```
+
+## Project Structure
+
+```text
+components/   UI components
+hooks/        State and editor behavior hooks
+services/     Export and image handling services
+src/test/     Test setup
+App.tsx       App composition
+index.tsx     Entry point
+types.ts      Shared types
+```
+
+## Working Rules
+
+Development guidelines for this repository live in [AGENTS.md](./AGENTS.md).
+
+## Verification
+
+Before opening or merging changes, run:
+
+```bash
+npm run test
+npm run lint
+npm run build
+```
