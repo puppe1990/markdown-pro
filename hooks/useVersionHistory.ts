@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Version } from '../types';
+import { STORAGE_KEYS } from '../constants/storage';
 
 export const useVersionHistory = (setMarkdown: (content: string) => void) => {
     const [versions, setVersions] = useState<Version[]>([]);
@@ -8,7 +9,7 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
 
     useEffect(() => {
         try {
-            const savedVersions = localStorage.getItem('markdown-versions');
+            const savedVersions = sessionStorage.getItem(STORAGE_KEYS.markdownVersions);
             if (savedVersions) {
                 const parsedVersions = JSON.parse(savedVersions);
                 if (Array.isArray(parsedVersions)) {
@@ -23,7 +24,7 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
 
     const saveVersionsToLocalStorage = (newVersions: Version[]) => {
         try {
-            localStorage.setItem('markdown-versions', JSON.stringify(newVersions));
+            sessionStorage.setItem(STORAGE_KEYS.markdownVersions, JSON.stringify(newVersions));
         } catch (error) {
             console.error('Failed to save version history:', error);
         }

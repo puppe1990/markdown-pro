@@ -7,6 +7,7 @@ import VersionHistoryPanel from './components/VersionHistoryPanel';
 import { useAutosave } from './hooks/useAutosave';
 import { useVersionHistory } from './hooks/useVersionHistory';
 import { Version } from './types';
+import { STORAGE_KEYS } from './constants/storage';
 
 const App: React.FC = () => {
     const [markdown, setMarkdown] = useState<string>('# Welcome to Markdown Pro!\n\nStart typing to see the magic happen.');
@@ -24,25 +25,34 @@ const App: React.FC = () => {
     }, [saveVersion]);
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-        const initialMarkdown = localStorage.getItem('markdown-content');
+        const savedTheme = localStorage.getItem(STORAGE_KEYS.theme) as 'light' | 'dark' | null;
+        const tabMarkdown = sessionStorage.getItem(STORAGE_KEYS.markdownContent);
+        const legacyMarkdown = localStorage.getItem(STORAGE_KEYS.markdownContent);
+
         if (savedTheme) {
             setTheme(savedTheme);
         } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             setTheme('dark');
         }
-        if (initialMarkdown) {
-            setMarkdown(initialMarkdown);
+
+        if (tabMarkdown) {
+            setMarkdown(tabMarkdown);
+            return;
+        }
+
+        if (legacyMarkdown) {
+            setMarkdown(legacyMarkdown);
+            sessionStorage.setItem(STORAGE_KEYS.markdownContent, legacyMarkdown);
         }
     }, []);
 
     useEffect(() => {
         if (theme === 'dark') {
             document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
+            localStorage.setItem(STORAGE_KEYS.theme, 'dark');
         } else {
             document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
+            localStorage.setItem(STORAGE_KEYS.theme, 'light');
         }
     }, [theme]);
 

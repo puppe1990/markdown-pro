@@ -1,10 +1,11 @@
 
 import { useEffect } from 'react';
+import { STORAGE_KEYS } from '../constants/storage';
 
 export const useAutosave = (value: string, delay: number) => {
     useEffect(() => {
         const handler = setTimeout(() => {
-            localStorage.setItem('markdown-content', value);
+            sessionStorage.setItem(STORAGE_KEYS.markdownContent, value);
         }, delay);
 
         return () => {
