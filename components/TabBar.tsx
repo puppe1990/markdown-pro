@@ -96,7 +96,11 @@ const TabBar: React.FC<Props> = ({
                             e.stopPropagation();
                             handleClose(tab);
                         }}
-                        className="opacity-0 group-hover:opacity-100 ml-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 w-4 h-4 flex items-center justify-center text-xs leading-none"
+                        className={`ml-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 w-4 h-4 flex items-center justify-center text-xs leading-none ${
+                            tab.id === activeTabId
+                                ? 'opacity-100'
+                                : 'opacity-0 group-hover:opacity-100'
+                        }`}
                     >
                         ×
                     </button>

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Toolbar from './Toolbar';
 import { addImage } from '../services/imageService';
 
@@ -10,6 +10,10 @@ interface EditorProps {
 const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isDragOver, setIsDragOver] = useState(false);
+
+    useEffect(() => {
+        textareaRef.current?.focus();
+    }, []);
 
     const insertImageFiles = async (files: File[]) => {
         const textarea = textareaRef.current;
@@ -76,6 +80,7 @@ const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
             <div className="flex-grow relative">
                 <textarea
                     ref={textareaRef}
+                    autoFocus
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     onDragOver={(event) => {

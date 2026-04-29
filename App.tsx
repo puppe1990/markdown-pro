@@ -26,7 +26,8 @@ const App: React.FC = () => {
         'editor',
     );
 
-    const markdown = activeTab.content;
+    const markdown = activeTab?.content ?? '';
+    const activeTabName = activeTab?.name ?? 'Untitled';
 
     const { versions, saveVersion } = useVersionHistory((content) => {
         updateTabContent(activeTabId, content);
@@ -82,7 +83,7 @@ const App: React.FC = () => {
                 onReadingModeToggle={() => setIsReadingMode(!isReadingMode)}
                 isReadingMode={isReadingMode}
                 markdownContent={markdown}
-                tabName={activeTab.name}
+                tabName={activeTabName}
                 onImportMarkdown={(content) => {
                     updateTabContent(activeTabId, content);
                     saveVersion(content);
@@ -123,7 +124,11 @@ const App: React.FC = () => {
                 <div
                     className={`w-full h-full ${activeView === 'editor' ? 'block' : 'hidden'} md:block md:w-1/2 ${isReadingMode ? '!hidden' : ''}`}
                 >
-                    <Editor value={markdown} onChange={handleSetMarkdown} />
+                    <Editor
+                        key={activeTabId}
+                        value={markdown}
+                        onChange={handleSetMarkdown}
+                    />
                 </div>
                 <div
                     className={`w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'} md:block ${isReadingMode ? '!w-full !block' : 'md:w-1/2'} border-l border-gray-200/60 dark:border-gray-700/60`}

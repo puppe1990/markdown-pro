@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useTabManager } from './useTabManager';
 
 describe('useTabManager', () => {
@@ -63,10 +63,20 @@ describe('useTabManager', () => {
     it('adds a new tab', () => {
         const { result } = renderHook(() => useTabManager());
         act(() => {
+            result.current.updateTabContent(
+                result.current.activeTabId,
+                '# First',
+            );
+        });
+
+        act(() => {
             result.current.addTab();
         });
+
         expect(result.current.tabs).toHaveLength(2);
         expect(result.current.tabs[1].name).toBe('Untitled 2');
+        expect(result.current.activeTabId).toBe(result.current.tabs[1].id);
+        expect(result.current.activeTab.content).toBe('');
     });
 
     it('creates a unique id after restoring saved tabs', async () => {
@@ -176,5 +186,66 @@ describe('useTabManager', () => {
             result.current.setActiveTabId(secondId);
         });
         expect(result.current.activeTab.content).toBe('# Tab 2');
+    });
+
+    it('keeps the last tab active when selecting it after creating multiple tabs', () => {
+        const { result } = renderHook(() => useTabManager());
+
+        act(() => {
+            result.current.updateTabContent(
+                result.current.activeTabId,
+                '# Tab 1',
+            );
+        });
+
+        act(() => {
+            result.current.addTab();
+        });
+        act(() => {
+            result.current.updateTabContent(
+                result.current.activeTabId,
+                '# Tab 2',
+            );
+        });
+
+        act(() => {
+            result.current.addTab();
+        });
+        act(() => {
+            result.current.updateTabContent(
+                result.current.activeTabId,
+                '# Tab 3',
+            );
+        });
+
+        act(() => {
+            result.current.addTab();
+        });
+        const lastTabId = result.current.activeTabId;
+
+        act(() => {
+            result.current.updateTabContent(lastTabId, '# Tab 4');
+        });
+
+        act(() => {
+            result.current.setActiveTabId(lastTabId);
+        });
+
+        expect(result.current.activeTabId).toBe(lastTabId);
+        expect(result.current.activeTab.content).toBe('# Tab 4');
+    });
+
+    it('restores the first tab when active tab id becomes invalid', async () => {
+        const { result } = renderHook(() => useTabManager());
+
+        act(() => {
+            result.current.setActiveTabId('missing-tab');
+        });
+
+        await waitFor(() => {
+            expect(result.current.activeTabId).toBe(result.current.tabs[0].id);
+        });
+
+        expect(result.current.activeTab).toBe(result.current.tabs[0]);
     });
 });
