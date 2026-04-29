@@ -14,6 +14,19 @@ const TABS_STORAGE_KEY = 'markdown-tabs';
 const ACTIVE_TAB_STORAGE_KEY = 'markdown-active-tab-id';
 const LEGACY_TABS_STORAGE_KEY = 'markdown-content';
 
+const readCounterFromId = (id: string) => {
+    const match = /^tab-(\d+)$/.exec(id);
+    return match ? Number(match[1]) : 0;
+};
+
+const syncCounterWithTabs = (tabs: Tab[]) => {
+    const highestStoredId = tabs.reduce((highestId, tab) => {
+        return Math.max(highestId, readCounterFromId(tab.id));
+    }, 0);
+
+    counter = Math.max(counter, highestStoredId);
+};
+
 const isTab = (value: unknown): value is Tab => {
     if (typeof value !== 'object' || value === null) return false;
 
@@ -37,7 +50,10 @@ const readStoredTabs = (): Tab[] => {
         const parsed = JSON.parse(storedTabs);
         if (Array.isArray(parsed)) {
             const tabs = parsed.filter(isTab);
-            if (tabs.length > 0) return tabs;
+            if (tabs.length > 0) {
+                syncCounterWithTabs(tabs);
+                return tabs;
+            }
         }
     } catch {
         // Ignore corrupted persisted state and fall back to a new tab.
@@ -95,8 +111,15 @@ export function useTabManager() {
         setTabs((prev) => {
             if (prev.length === 1) return prev;
             const idx = prev.findIndex((t) => t.id === id);
+            if (idx === -1) return prev;
+
             const next = prev.filter((t) => t.id !== id);
-            setActiveTabId(next[Math.max(0, idx - 1)].id);
+            const nextActiveTab = next[Math.max(0, idx - 1)];
+
+            if (nextActiveTab) {
+                setActiveTabId(nextActiveTab.id);
+            }
+
             return next;
         });
     }, []);

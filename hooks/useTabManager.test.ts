@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTabManager } from './useTabManager';
 
@@ -6,6 +6,11 @@ describe('useTabManager', () => {
     beforeEach(() => {
         localStorage.clear();
     });
+
+    const loadFreshUseTabManager = async () => {
+        vi.resetModules();
+        return (await import('./useTabManager')).useTabManager;
+    };
 
     it('loads saved tabs from localStorage', () => {
         localStorage.setItem(
@@ -64,6 +69,22 @@ describe('useTabManager', () => {
         expect(result.current.tabs[1].name).toBe('Untitled 2');
     });
 
+    it('creates a unique id after restoring saved tabs', async () => {
+        localStorage.setItem(
+            'markdown-tabs',
+            JSON.stringify([{ id: 'tab-1', name: 'Saved', content: '# Note' }]),
+        );
+
+        const freshUseTabManager = await loadFreshUseTabManager();
+        const { result } = renderHook(() => freshUseTabManager());
+
+        act(() => {
+            result.current.addTab();
+        });
+
+        expect(result.current.tabs[1].id).toBe('tab-2');
+    });
+
     it('switches active tab', () => {
         const { result } = renderHook(() => useTabManager());
         act(() => {
@@ -118,6 +139,28 @@ describe('useTabManager', () => {
             result.current.closeTab(id);
         });
         expect(result.current.tabs).toHaveLength(1);
+    });
+
+    it('keeps one tab after closing a restored tab with a new tab added', async () => {
+        localStorage.setItem(
+            'markdown-tabs',
+            JSON.stringify([{ id: 'tab-1', name: 'Saved', content: '# Note' }]),
+        );
+
+        const freshUseTabManager = await loadFreshUseTabManager();
+        const { result } = renderHook(() => freshUseTabManager());
+
+        act(() => {
+            result.current.addTab();
+        });
+
+        act(() => {
+            result.current.closeTab('tab-1');
+        });
+
+        expect(result.current.tabs).toHaveLength(1);
+        expect(result.current.tabs[0].id).toBe('tab-2');
+        expect(result.current.activeTabId).toBe('tab-2');
     });
 
     it('active tab content reflects current tab', () => {
