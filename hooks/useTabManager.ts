@@ -72,18 +72,20 @@ const readStoredActiveTabId = (tabs: Tab[]) => {
     return tabs[0]?.id ?? '';
 };
 
+interface TabState {
+    tabs: Tab[];
+    activeTabId: string;
+}
+
 export function useTabManager() {
-    const [initialState] = useState(() => {
+    const [tabState, setTabState] = useState<TabState>(() => {
         const tabs = readStoredTabs();
         return {
             tabs,
             activeTabId: readStoredActiveTabId(tabs),
         };
     });
-    const [tabs, setTabs] = useState<Tab[]>(initialState.tabs);
-    const [activeTabId, setActiveTabId] = useState<string>(
-        initialState.activeTabId,
-    );
+    const { tabs, activeTabId } = tabState;
 
     const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
@@ -98,40 +100,64 @@ export function useTabManager() {
     }, [activeTabId]);
 
     const addTab = useCallback(() => {
-        setTabs((prev) => {
-            const count = prev.length + 1;
+        const id = newId();
+
+        setTabState((prev) => {
+            const count = prev.tabs.length + 1;
             const name = count === 1 ? 'Untitled' : `Untitled ${count}`;
-            const tab: Tab = { id: newId(), name, content: '' };
-            setActiveTabId(tab.id);
-            return [...prev, tab];
+            return {
+                tabs: [...prev.tabs, { id, name, content: '' }],
+                activeTabId: id,
+            };
         });
     }, []);
 
     const closeTab = useCallback((id: string) => {
-        setTabs((prev) => {
-            if (prev.length === 1) return prev;
-            const idx = prev.findIndex((t) => t.id === id);
+        setTabState((prev) => {
+            if (prev.tabs.length === 1) return prev;
+            const idx = prev.tabs.findIndex((tab) => tab.id === id);
             if (idx === -1) return prev;
 
-            const next = prev.filter((t) => t.id !== id);
-            const nextActiveTab = next[Math.max(0, idx - 1)];
+            const nextTabs = prev.tabs.filter((tab) => tab.id !== id);
+            const nextActiveTabId =
+                prev.activeTabId === id
+                    ? (nextTabs[Math.max(0, idx - 1)]?.id ??
+                      nextTabs[0]?.id ??
+                      '')
+                    : prev.activeTabId;
 
-            if (nextActiveTab) {
-                setActiveTabId(nextActiveTab.id);
-            }
-
-            return next;
+            return {
+                tabs: nextTabs,
+                activeTabId: nextActiveTabId,
+            };
         });
     }, []);
 
+    const setActiveTabId = useCallback((id: string) => {
+        setTabState((prev) => ({
+            ...prev,
+            activeTabId: prev.tabs.some((tab) => tab.id === id)
+                ? id
+                : (prev.tabs[0]?.id ?? ''),
+        }));
+    }, []);
+
     const renameTab = useCallback((id: string, name: string) => {
-        setTabs((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)));
+        setTabState((prev) => ({
+            ...prev,
+            tabs: prev.tabs.map((tab) =>
+                tab.id === id ? { ...tab, name } : tab,
+            ),
+        }));
     }, []);
 
     const updateTabContent = useCallback((id: string, content: string) => {
-        setTabs((prev) =>
-            prev.map((t) => (t.id === id ? { ...t, content } : t)),
-        );
+        setTabState((prev) => ({
+            ...prev,
+            tabs: prev.tabs.map((tab) =>
+                tab.id === id ? { ...tab, content } : tab,
+            ),
+        }));
     }, []);
 
     return {
