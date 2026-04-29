@@ -1,7 +1,5 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Version } from '../types';
-import { STORAGE_KEYS } from '../constants/storage';
 
 export const useVersionHistory = (setMarkdown: (content: string) => void) => {
     const [versions, setVersions] = useState<Version[]>([]);
@@ -9,7 +7,7 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
 
     useEffect(() => {
         try {
-            const savedVersions = sessionStorage.getItem(STORAGE_KEYS.markdownVersions);
+            const savedVersions = localStorage.getItem('markdown-versions');
             if (savedVersions) {
                 const parsedVersions = JSON.parse(savedVersions);
                 if (Array.isArray(parsedVersions)) {
@@ -24,7 +22,10 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
 
     const saveVersionsToLocalStorage = (newVersions: Version[]) => {
         try {
-            sessionStorage.setItem(STORAGE_KEYS.markdownVersions, JSON.stringify(newVersions));
+            localStorage.setItem(
+                'markdown-versions',
+                JSON.stringify(newVersions),
+            );
         } catch (error) {
             console.error('Failed to save version history:', error);
         }
@@ -34,9 +35,9 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
         }
-        
+
         saveTimeoutRef.current = window.setTimeout(() => {
-            setVersions(prevVersions => {
+            setVersions((prevVersions) => {
                 const latestVersion = prevVersions[0];
                 if (latestVersion && latestVersion.content === content) {
                     return prevVersions;
@@ -54,12 +55,15 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
         }, 2000); // Debounce saving by 2 seconds
     }, []);
 
-    const revertToVersion = useCallback((versionIndex: number) => {
-        const versionToRevert = versions[versionIndex];
-        if (versionToRevert) {
-            setMarkdown(versionToRevert.content);
-        }
-    }, [versions, setMarkdown]);
-    
+    const revertToVersion = useCallback(
+        (versionIndex: number) => {
+            const versionToRevert = versions[versionIndex];
+            if (versionToRevert) {
+                setMarkdown(versionToRevert.content);
+            }
+        },
+        [versions, setMarkdown],
+    );
+
     return { versions, saveVersion, revertToVersion };
 };
