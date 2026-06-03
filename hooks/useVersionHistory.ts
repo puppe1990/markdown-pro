@@ -1,59 +1,53 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Version } from '../types';
+import { useState, useCallback } from 'react';
+import { useVersions, useSaveVersion } from '@/src/features/versions/useVersions';
+import { Version as DbVersion } from '@/src/features/versions/versions.server';
+import { Version } from '@/types';
 
-export const useVersionHistory = (setMarkdown: (content: string) => void) => {
-    const [versions, setVersions] = useState<Version[]>([]);
-    const saveTimeoutRef = useRef<number | null>(null);
+export function useVersionHistory(
+    setMarkdown: (content: string) => void,
+    activeTabId?: string,
+) {
+    const { data: remoteVersions } = useVersions(activeTabId);
+    const saveVersionMut = useSaveVersion();
 
-    useEffect(() => {
+    const [localVersions, setLocalVersions] = useState<Version[]>(() => {
+        if (typeof window === 'undefined') return [];
         try {
-            const savedVersions = localStorage.getItem('markdown-versions');
-            if (savedVersions) {
-                const parsedVersions = JSON.parse(savedVersions);
-                if (Array.isArray(parsedVersions)) {
-                    setVersions(parsedVersions);
-                }
+            const saved = localStorage.getItem('markdown-versions');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) return parsed as Version[];
             }
-        } catch (error) {
-            console.error('Failed to load version history:', error);
-            setVersions([]);
-        }
-    }, []);
+        } catch { /* ignore */ }
+        return [];
+    });
 
-    const saveVersionsToLocalStorage = (newVersions: Version[]) => {
-        try {
-            localStorage.setItem(
-                'markdown-versions',
-                JSON.stringify(newVersions),
-            );
-        } catch (error) {
-            console.error('Failed to save version history:', error);
-        }
-    };
+    const remoteMapped: Version[] = (remoteVersions ?? []).map((v: DbVersion) => ({
+        content: v.content,
+        timestamp: new Date(v.created_at).getTime(),
+    }));
 
-    const saveVersion = useCallback((content: string) => {
-        if (saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-        }
+    const versions =
+        remoteMapped.length > 0
+            ? remoteMapped
+            : localVersions;
 
-        saveTimeoutRef.current = window.setTimeout(() => {
-            setVersions((prevVersions) => {
-                const latestVersion = prevVersions[0];
-                if (latestVersion && latestVersion.content === content) {
-                    return prevVersions;
-                }
+    const saveVersion = useCallback(
+        (content: string) => {
+            setLocalVersions((prev) => {
+                const latest = prev[0];
+                if (latest && latest.content === content) return prev;
 
-                const newVersion: Version = {
-                    content,
-                    timestamp: Date.now(),
-                };
-
-                const newVersions = [newVersion, ...prevVersions].slice(0, 50); // Limit to 50 versions
-                saveVersionsToLocalStorage(newVersions);
-                return newVersions;
+                const newVersion: Version = { content, timestamp: Date.now() };
+                return [newVersion, ...prev].slice(0, 50);
             });
-        }, 2000); // Debounce saving by 2 seconds
-    }, []);
+
+            if (activeTabId) {
+                saveVersionMut.mutate({ data: { tabId: activeTabId, content } });
+            }
+        },
+        [activeTabId, saveVersionMut],
+    );
 
     const revertToVersion = useCallback(
         (versionIndex: number) => {
@@ -66,4 +60,4 @@ export const useVersionHistory = (setMarkdown: (content: string) => void) => {
     );
 
     return { versions, saveVersion, revertToVersion };
-};
+}
