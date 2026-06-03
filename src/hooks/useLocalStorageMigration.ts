@@ -1,5 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { useCreateTab, useUpdateTab, useTabs } from '@/src/features/tabs/useTabs';
+import {
+    useCreateTab,
+    useUpdateTab,
+    useTabs,
+} from '@/src/features/tabs/useTabs';
 import { useSaveVersion } from '@/src/features/versions/useVersions';
 import { useSetTheme } from '@/src/features/preferences/usePreferences';
 
@@ -62,11 +66,15 @@ export function useLocalStorageMigration() {
                     const versions = JSON.parse(versionsRaw);
                     if (Array.isArray(versions)) {
                         const activeTab =
-                            tabs.find((t) => t.id === activeTabIdRaw) ?? tabs[0];
+                            tabs.find((t) => t.id === activeTabIdRaw) ??
+                            tabs[0];
                         if (activeTab) {
                             for (const v of versions.slice(0, 50)) {
                                 await saveVersion.mutateAsync({
-                                    data: { tabId: activeTab.id, content: v.content },
+                                    data: {
+                                        tabId: activeTab.id,
+                                        content: v.content,
+                                    },
                                 });
                             }
                         }

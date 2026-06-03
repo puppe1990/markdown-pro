@@ -27,16 +27,22 @@ function DashboardPage() {
 
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
+            const saved = localStorage.getItem('theme') as
+                | 'light'
+                | 'dark'
+                | null;
             if (saved) return saved;
-            if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+            if (window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+                return 'dark';
         }
         return 'light';
     });
 
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
     const [isReadingMode, setIsReadingMode] = useState(false);
-    const [activeView, setActiveView] = useState<'editor' | 'preview'>('editor');
+    const [activeView, setActiveView] = useState<'editor' | 'preview'>(
+        'editor',
+    );
 
     const {
         tabs,
@@ -52,12 +58,9 @@ function DashboardPage() {
     const markdown = activeTab?.content ?? '';
     const activeTabName = activeTab?.name ?? 'Untitled';
 
-    const { versions, saveVersion } = useVersionHistory(
-        (content) => {
-            updateTabContent(activeTabId, content);
-        },
-        activeTabId,
-    );
+    const { versions, saveVersion } = useVersionHistory((content) => {
+        updateTabContent(activeTabId, content);
+    }, activeTabId);
 
     const handleSetMarkdown = useCallback(
         (newContent: string) => {

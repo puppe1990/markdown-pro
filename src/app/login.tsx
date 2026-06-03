@@ -68,7 +68,10 @@ function LoginPage() {
                 </form>
                 <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
                     Don&apos;t have an account?{' '}
-                    <a href="/signup" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    <a
+                        href="/signup"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
                         Sign up
                     </a>
                 </p>

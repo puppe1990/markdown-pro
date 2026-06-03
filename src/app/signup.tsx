@@ -82,7 +82,10 @@ function SignupPage() {
                 </form>
                 <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
                     Already have an account?{' '}
-                    <a href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    <a
+                        href="/login"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
                         Sign in
                     </a>
                 </p>

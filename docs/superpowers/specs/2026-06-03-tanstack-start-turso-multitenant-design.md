@@ -72,27 +72,27 @@ All under `src/features/<domain>/<domain>.server.ts`. Every handler extracts `us
 
 ### Tabs
 
-| Function       | SQL                                       |
-| -------------- | ----------------------------------------- |
-| `getTabs()`    | `SELECT * FROM tabs WHERE user_id = ? ORDER BY position` |
-| `createTab()`  | `INSERT INTO tabs ... RETURNING *`         |
-| `updateTab()`  | `UPDATE tabs SET ... WHERE id = ? AND user_id = ?` |
-| `deleteTab()`  | `DELETE FROM tabs WHERE id = ? AND user_id = ?` |
+| Function       | SQL                                                         |
+| -------------- | ----------------------------------------------------------- |
+| `getTabs()`    | `SELECT * FROM tabs WHERE user_id = ? ORDER BY position`    |
+| `createTab()`  | `INSERT INTO tabs ... RETURNING *`                          |
+| `updateTab()`  | `UPDATE tabs SET ... WHERE id = ? AND user_id = ?`          |
+| `deleteTab()`  | `DELETE FROM tabs WHERE id = ? AND user_id = ?`             |
 | `reorderTab()` | `UPDATE tabs SET position = ? WHERE id = ? AND user_id = ?` |
 
 ### Versions
 
-| Function          | SQL                                                        |
-| ----------------- | ---------------------------------------------------------- |
-| `getVersions()`   | `SELECT * FROM versions WHERE tab_id = ? AND user_id = ? ORDER BY created_at DESC LIMIT 50` |
-| `saveVersion()`   | `INSERT INTO versions ...` (trim oldest beyond 50 in handler) |
+| Function        | SQL                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| `getVersions()` | `SELECT * FROM versions WHERE tab_id = ? AND user_id = ? ORDER BY created_at DESC LIMIT 50` |
+| `saveVersion()` | `INSERT INTO versions ...` (trim oldest beyond 50 in handler)                               |
 
 ### Preferences
 
-| Function       | SQL                                     |
-| -------------- | --------------------------------------- |
-| `getPrefs()`   | `SELECT * FROM preferences WHERE user_id = ?` |
-| `setTheme()`   | `INSERT OR REPLACE INTO preferences ...` |
+| Function     | SQL                                           |
+| ------------ | --------------------------------------------- |
+| `getPrefs()` | `SELECT * FROM preferences WHERE user_id = ?` |
+| `setTheme()` | `INSERT OR REPLACE INTO preferences ...`      |
 
 ## Client Hooks (TanStack Query)
 
@@ -167,6 +167,7 @@ src/
 ## Migration from localStorage
 
 On first login after auth:
+
 1. Hooks try to read from localStorage (`markdown-tabs`, `markdown-active-tab-id`, `markdown-versions`, `theme`)
 2. If data found, call server fns to persist to Turso
 3. Clear localStorage keys
@@ -175,6 +176,7 @@ On first login after auth:
 ## What Changes vs Changes Not
 
 **Changes:**
+
 - `App.tsx` → `dashboard.tsx` (route component)
 - `index.tsx` → `__root.tsx` (TanStack Start entry)
 - `vite.config.ts` replaced by TanStack Start config
@@ -184,6 +186,7 @@ On first login after auth:
 - Add login/signup pages
 
 **Unchanged:**
+
 - All visual components (`Editor`, `Preview`, `TabBar`, `VersionHistoryPanel`, `Header`)
 - `services/` (exportService, imageService)
 - `types.ts`

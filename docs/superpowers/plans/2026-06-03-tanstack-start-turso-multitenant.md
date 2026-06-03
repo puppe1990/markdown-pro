@@ -64,6 +64,7 @@ Delete:
 ### Task 1: Install dependencies and update package.json
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `.env`
 
@@ -124,6 +125,7 @@ git commit -m "chore: add TanStack Start, Turso, Better Auth deps; update script
 ### Task 2: Create app.config.ts (TanStack Start configuration)
 
 **Files:**
+
 - Create: `app.config.ts`
 
 - [ ] **Step 1: Write `app.config.ts`**
@@ -157,6 +159,7 @@ npm install -D vite-tsconfig-paths
 ```bash
 npx vinxi dev --help
 ```
+
 Expected: shows Vinxi help output (confirms TanStack Start is installed correctly).
 
 - [ ] **Step 4: Commit**
@@ -171,6 +174,7 @@ git commit -m "feat: add TanStack Start config"
 ### Task 3: Extract vitest config from vite.config.ts
 
 **Files:**
+
 - Create: `vitest.config.ts`
 - Delete: `vite.config.ts`
 
@@ -206,6 +210,7 @@ rm vite.config.ts
 ```bash
 npx vitest run
 ```
+
 Expected: tests run (may fail — that's OK at this stage, we just need the config to parse).
 
 - [ ] **Step 4: Commit**
@@ -220,6 +225,7 @@ git commit -m "refactor: extract vitest config from vite.config.ts"
 ### Task 4: Update index.html for TanStack Start
 
 **Files:**
+
 - Modify: `index.html`
 
 - [ ] **Step 1: Replace `index.html` content**
@@ -337,6 +343,7 @@ git commit -m "refactor: update index.html for TanStack Start template"
 ### Task 5: Create Turso database client
 
 **Files:**
+
 - Create: `src/db/client.ts`
 
 - [ ] **Step 1: Write `src/db/client.ts`**
@@ -375,6 +382,7 @@ git commit -m "feat: add Turso database client"
 ### Task 6: Create database schema
 
 **Files:**
+
 - Create: `src/db/schema.sql`
 
 - [ ] **Step 1: Write `src/db/schema.sql`**
@@ -428,6 +436,7 @@ cat src/db/schema.sql | turso db shell your-db-name
 ```bash
 turso db shell your-db-name ".tables"
 ```
+
 Expected: lists `preferences`, `tabs`, `versions` (and Better Auth tables after Task 7).
 
 - [ ] **Step 4: Commit**
@@ -442,6 +451,7 @@ git commit -m "feat: add database schema for tabs, versions, preferences"
 ### Task 7: Setup Better Auth
 
 **Files:**
+
 - Create: `src/features/auth/auth.ts`
 
 - [ ] **Step 1: Write `src/features/auth/auth.ts`**
@@ -470,6 +480,7 @@ export const auth = betterAuth({
 ```bash
 npx tsc --noEmit src/features/auth/auth.ts
 ```
+
 Expected: no errors (besides unrelated project errors).
 
 - [ ] **Step 3: Commit**
@@ -484,6 +495,7 @@ git commit -m "feat: add Better Auth configuration with email/password"
 ### Task 8: Create Better Auth API route
 
 **Files:**
+
 - Create: `src/app/api/auth/$.ts`
 
 - [ ] **Step 1: Create directory structure**
@@ -516,6 +528,7 @@ git commit -m "feat: add Better Auth API route handler"
 ### Task 9: Create tabs server functions
 
 **Files:**
+
 - Create: `src/features/tabs/tabs.server.ts`
 
 - [ ] **Step 1: Write `src/features/tabs/tabs.server.ts`**
@@ -552,23 +565,26 @@ function tabRowToTab(row: TabRow): Tab {
     return { id: row.id, name: row.name, content: row.content };
 }
 
-export const getTabs = createServerFn({ method: 'GET' }).handler(async (): Promise<Tab[]> => {
-    const session = await requireAuth();
-    if (!session) throw new Error('Unauthorized');
+export const getTabs = createServerFn({ method: 'GET' }).handler(
+    async (): Promise<Tab[]> => {
+        const session = await requireAuth();
+        if (!session) throw new Error('Unauthorized');
 
-    const db = getDb();
-    const result = await db.execute({
-        sql: `SELECT id, user_id, name, content, position, created_at, updated_at
+        const db = getDb();
+        const result = await db.execute({
+            sql: `SELECT id, user_id, name, content, position, created_at, updated_at
               FROM tabs WHERE user_id = ? ORDER BY position`,
-        args: [session.user.id],
-    });
+            args: [session.user.id],
+        });
 
-    return (result.rows as unknown as TabRow[]).map(tabRowToTab);
-});
+        return (result.rows as unknown as TabRow[]).map(tabRowToTab);
+    },
+);
 
 export const createTab = createServerFn({ method: 'POST' })
     .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         const d = data as Record<string, unknown>;
         return {
             id: String(d.id),
@@ -584,7 +600,9 @@ export const createTab = createServerFn({ method: 'POST' })
             sql: 'SELECT COUNT(*) as count FROM tabs WHERE user_id = ?',
             args: [session.user.id],
         });
-        const position = Number((countResult.rows[0] as { count: number }).count);
+        const position = Number(
+            (countResult.rows[0] as { count: number }).count,
+        );
 
         const result = await db.execute({
             sql: `INSERT INTO tabs (id, user_id, name, content, position)
@@ -597,7 +615,8 @@ export const createTab = createServerFn({ method: 'POST' })
 
 export const updateTab = createServerFn({ method: 'POST' })
     .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         const d = data as Record<string, unknown>;
         return {
             id: String(d.id),
@@ -634,7 +653,8 @@ export const updateTab = createServerFn({ method: 'POST' })
 
 export const deleteTab = createServerFn({ method: 'POST' })
     .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         return { id: String((data as Record<string, unknown>).id) };
     })
     .handler(async ({ data }): Promise<void> => {
@@ -650,7 +670,8 @@ export const deleteTab = createServerFn({ method: 'POST' })
 
 export const reorderTab = createServerFn({ method: 'POST' })
     .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         const d = data as Record<string, unknown>;
         return { id: String(d.id), position: Number(d.position) };
     })
@@ -678,6 +699,7 @@ git commit -m "feat: add tabs server functions (CRUD + reorder)"
 ### Task 10: Create tabs hooks
 
 **Files:**
+
 - Create: `src/features/tabs/useTabs.ts`
 
 - [ ] **Step 1: Write `src/features/tabs/useTabs.ts`**
@@ -717,7 +739,11 @@ export function useUpdateTab() {
             qc.setQueryData<Tab[]>(['tabs'], (old) =>
                 old?.map((t) =>
                     t.id === input.id
-                        ? { ...t, name: input.name ?? t.name, content: input.content ?? t.content }
+                        ? {
+                              ...t,
+                              name: input.name ?? t.name,
+                              content: input.content ?? t.content,
+                          }
                         : t,
                 ),
             );
@@ -737,7 +763,9 @@ export function useDeleteTab() {
         onMutate: async (input) => {
             await qc.cancelQueries({ queryKey: ['tabs'] });
             const previous = qc.getQueryData<Tab[]>(['tabs']);
-            qc.setQueryData<Tab[]>(['tabs'], (old) => old?.filter((t) => t.id !== input.id));
+            qc.setQueryData<Tab[]>(['tabs'], (old) =>
+                old?.filter((t) => t.id !== input.id),
+            );
             return { previous };
         },
         onError: (_err, _input, context) => {
@@ -760,6 +788,7 @@ git commit -m "feat: add tabs TanStack Query hooks with optimistic updates"
 ### Task 11: Create versions server functions
 
 **Files:**
+
 - Create: `src/features/versions/versions.server.ts`
 
 - [ ] **Step 1: Write `src/features/versions/versions.server.ts`**
@@ -785,7 +814,8 @@ function requireAuth() {
 
 export const getVersions = createServerFn({ method: 'GET' })
     .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         return { tabId: String((data as Record<string, unknown>).tabId) };
     })
     .handler(async ({ data }): Promise<Version[]> => {
@@ -806,7 +836,8 @@ export const getVersions = createServerFn({ method: 'GET' })
 
 export const saveVersion = createServerFn({ method: 'POST' })
     .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         const d = data as Record<string, unknown>;
         return { tabId: String(d.tabId), content: String(d.content) };
     })
@@ -848,6 +879,7 @@ git commit -m "feat: add versions server functions (get, save with 50 cap)"
 ### Task 12: Create versions hooks
 
 **Files:**
+
 - Create: `src/features/versions/useVersions.ts`
 
 - [ ] **Step 1: Write `src/features/versions/useVersions.ts`**
@@ -887,6 +919,7 @@ git commit -m "feat: add versions TanStack Query hooks"
 ### Task 13: Create preferences server functions
 
 **Files:**
+
 - Create: `src/features/preferences/preferences.server.ts`
 
 - [ ] **Step 1: Write `src/features/preferences/preferences.server.ts`**
@@ -907,26 +940,33 @@ function requireAuth() {
     return auth.api.getSession({ headers: request.headers });
 }
 
-export const getPreferences = createServerFn({ method: 'GET' }).handler(async (): Promise<Preferences> => {
-    const session = await requireAuth();
-    if (!session) throw new Error('Unauthorized');
+export const getPreferences = createServerFn({ method: 'GET' }).handler(
+    async (): Promise<Preferences> => {
+        const session = await requireAuth();
+        if (!session) throw new Error('Unauthorized');
 
-    const db = getDb();
-    const result = await db.execute({
-        sql: 'SELECT theme FROM preferences WHERE user_id = ?',
-        args: [session.user.id],
-    });
+        const db = getDb();
+        const result = await db.execute({
+            sql: 'SELECT theme FROM preferences WHERE user_id = ?',
+            args: [session.user.id],
+        });
 
-    if (result.rows.length === 0) {
-        return { theme: 'light' };
-    }
+        if (result.rows.length === 0) {
+            return { theme: 'light' };
+        }
 
-    return { theme: (result.rows[0] as { theme: string }).theme as 'light' | 'dark' };
-});
+        return {
+            theme: (result.rows[0] as { theme: string }).theme as
+                | 'light'
+                | 'dark',
+        };
+    },
+);
 
 export const setTheme = createServerFn({ method: 'POST' })
     .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         const theme = String((data as Record<string, unknown>).theme);
         if (theme !== 'light' && theme !== 'dark') {
             throw new Error('theme must be "light" or "dark"');
@@ -963,13 +1003,18 @@ git commit -m "feat: add preferences server functions (get, setTheme)"
 ### Task 14: Create preferences hooks
 
 **Files:**
+
 - Create: `src/features/preferences/usePreferences.ts`
 
 - [ ] **Step 1: Write `src/features/preferences/usePreferences.ts`**
 
 ```ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getPreferences, setTheme, type Preferences } from './preferences.server';
+import {
+    getPreferences,
+    setTheme,
+    type Preferences,
+} from './preferences.server';
 
 export function usePreferences() {
     return useQuery({
@@ -985,7 +1030,9 @@ export function useSetTheme() {
         onMutate: async (input) => {
             await qc.cancelQueries({ queryKey: ['preferences'] });
             const previous = qc.getQueryData<Preferences>(['preferences']);
-            qc.setQueryData<Preferences>(['preferences'], { theme: input.theme });
+            qc.setQueryData<Preferences>(['preferences'], {
+                theme: input.theme,
+            });
             return { previous };
         },
         onError: (_err, _input, context) => {
@@ -1008,6 +1055,7 @@ git commit -m "feat: add preferences TanStack Query hooks with optimistic update
 ### Task 15: Create auth client
 
 **Files:**
+
 - Create: `src/features/auth/auth-client.ts`
 
 - [ ] **Step 1: Write `src/features/auth/auth-client.ts`**
@@ -1034,6 +1082,7 @@ git commit -m "feat: add Better Auth client with useSession"
 ### Task 16: Create login and signup pages
 
 **Files:**
+
 - Create: `src/app/login.tsx`
 - Create: `src/app/signup.tsx`
 
@@ -1110,7 +1159,10 @@ function LoginPage() {
                 </form>
                 <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
                     Don&apos;t have an account?{' '}
-                    <a href="/signup" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    <a
+                        href="/signup"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
                         Sign up
                     </a>
                 </p>
@@ -1207,7 +1259,10 @@ function SignupPage() {
                 </form>
                 <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
                     Already have an account?{' '}
-                    <a href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    <a
+                        href="/login"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
                         Sign in
                     </a>
                 </p>
@@ -1226,9 +1281,10 @@ git commit -m "feat: add login and signup pages"
 
 ---
 
-### Task 17: Create root layout (__root.tsx)
+### Task 17: Create root layout (\_\_root.tsx)
 
 **Files:**
+
 - Create: `src/app/__root.tsx`
 
 - [ ] **Step 1: Write `src/app/__root.tsx`**
@@ -1266,6 +1322,7 @@ git commit -m "feat: add root layout with QueryClient provider"
 ### Task 18: Create landing page (redirect based on auth)
 
 **Files:**
+
 - Create: `src/app/index.tsx`
 
 - [ ] **Step 1: Write `src/app/index.tsx`**
@@ -1304,6 +1361,7 @@ git commit -m "feat: add landing page with auth-based redirect"
 ### Task 19: Create dashboard route (migrate App.tsx)
 
 **Files:**
+
 - Create: `src/app/dashboard.tsx`
 - Delete: `App.tsx`
 
@@ -1339,16 +1397,22 @@ function DashboardPage() {
 
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
+            const saved = localStorage.getItem('theme') as
+                | 'light'
+                | 'dark'
+                | null;
             if (saved) return saved;
-            if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+            if (window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+                return 'dark';
         }
         return 'light';
     });
 
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
     const [isReadingMode, setIsReadingMode] = useState(false);
-    const [activeView, setActiveView] = useState<'editor' | 'preview'>('editor');
+    const [activeView, setActiveView] = useState<'editor' | 'preview'>(
+        'editor',
+    );
 
     const {
         tabs,
@@ -1519,13 +1583,19 @@ git commit -m "feat: migrate App.tsx to dashboard route with auth guard"
 ### Task 20: Refactor useTabManager hook
 
 **Files:**
+
 - Modify: `src/hooks/useTabManager.ts`
 
 - [ ] **Step 1: Rewrite `src/hooks/useTabManager.ts`**
 
 ```ts
 import { useState, useCallback } from 'react';
-import { useTabs, useCreateTab, useUpdateTab, useDeleteTab } from '@/src/features/tabs/useTabs';
+import {
+    useTabs,
+    useCreateTab,
+    useUpdateTab,
+    useDeleteTab,
+} from '@/src/features/tabs/useTabs';
 import { Tab as TqTab } from '@/src/features/tabs/tabs.server';
 
 export interface Tab {
@@ -1554,55 +1624,77 @@ export function useTabManager() {
             const stored = localStorage.getItem('markdown-tabs');
             if (stored) {
                 const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed as Tab[];
+                if (Array.isArray(parsed) && parsed.length > 0)
+                    return parsed as Tab[];
             }
-        } catch { /* ignore */ }
+        } catch {
+            /* ignore */
+        }
         return [defaultTab()];
     });
 
     const [activeTabId, setActiveTabIdState] = useState(() => {
         if (typeof window === 'undefined') return localTabs[0]?.id ?? '';
         const stored = localStorage.getItem('markdown-active-tab-id');
-        return stored || localTabs[0]?.id ?? '';
+        return (stored || localTabs[0]?.id) ?? '';
     });
 
     const tabs = remoteTabs && remoteTabs.length > 0 ? remoteTabs : localTabs;
 
     const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
-    const setActiveTabId = useCallback((id: string) => {
-        setActiveTabIdState(tabs.some((t) => t.id === id) ? id : (tabs[0]?.id ?? ''));
-    }, [tabs]);
+    const setActiveTabId = useCallback(
+        (id: string) => {
+            setActiveTabIdState(
+                tabs.some((t) => t.id === id) ? id : (tabs[0]?.id ?? ''),
+            );
+        },
+        [tabs],
+    );
 
     const addTab = useCallback(() => {
         const id = newId();
-        const name = tabs.length === 0 ? 'Untitled' : `Untitled ${tabs.length + 1}`;
+        const name =
+            tabs.length === 0 ? 'Untitled' : `Untitled ${tabs.length + 1}`;
         const newTab: Tab = { id, name, content: '' };
         setLocalTabs((prev) => [...prev, newTab]);
         setActiveTabIdState(id);
         createTabMut.mutate({ data: { id, name } });
     }, [tabs.length, createTabMut]);
 
-    const closeTab = useCallback((id: string) => {
-        if (tabs.length === 1) return;
-        setLocalTabs((prev) => prev.filter((t) => t.id !== id));
-        deleteTabMut.mutate({ data: { id } });
-        setActiveTabIdState((prevActive) => {
-            if (prevActive !== id) return prevActive;
-            const remaining = tabs.filter((t) => t.id !== id);
-            return remaining[0]?.id ?? '';
-        });
-    }, [tabs, deleteTabMut]);
+    const closeTab = useCallback(
+        (id: string) => {
+            if (tabs.length === 1) return;
+            setLocalTabs((prev) => prev.filter((t) => t.id !== id));
+            deleteTabMut.mutate({ data: { id } });
+            setActiveTabIdState((prevActive) => {
+                if (prevActive !== id) return prevActive;
+                const remaining = tabs.filter((t) => t.id !== id);
+                return remaining[0]?.id ?? '';
+            });
+        },
+        [tabs, deleteTabMut],
+    );
 
-    const renameTab = useCallback((id: string, name: string) => {
-        setLocalTabs((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)));
-        updateTabMut.mutate({ data: { id, name } });
-    }, [updateTabMut]);
+    const renameTab = useCallback(
+        (id: string, name: string) => {
+            setLocalTabs((prev) =>
+                prev.map((t) => (t.id === id ? { ...t, name } : t)),
+            );
+            updateTabMut.mutate({ data: { id, name } });
+        },
+        [updateTabMut],
+    );
 
-    const updateTabContent = useCallback((id: string, content: string) => {
-        setLocalTabs((prev) => prev.map((t) => (t.id === id ? { ...t, content } : t)));
-        updateTabMut.mutate({ data: { id, content } });
-    }, [updateTabMut]);
+    const updateTabContent = useCallback(
+        (id: string, content: string) => {
+            setLocalTabs((prev) =>
+                prev.map((t) => (t.id === id ? { ...t, content } : t)),
+            );
+            updateTabMut.mutate({ data: { id, content } });
+        },
+        [updateTabMut],
+    );
 
     return {
         tabs,
@@ -1630,13 +1722,17 @@ git commit -m "refactor: useTabManager to consume TanStack Query + sync to Turso
 ### Task 21: Refactor useVersionHistory hook
 
 **Files:**
+
 - Modify: `src/hooks/useVersionHistory.ts`
 
 - [ ] **Step 1: Rewrite `src/hooks/useVersionHistory.ts`**
 
 ```ts
 import { useState, useCallback } from 'react';
-import { useVersions, useSaveVersion } from '@/src/features/versions/useVersions';
+import {
+    useVersions,
+    useSaveVersion,
+} from '@/src/features/versions/useVersions';
 import { Version as DbVersion } from '@/src/features/versions/versions.server';
 import { Version } from '@/types';
 
@@ -1655,19 +1751,20 @@ export function useVersionHistory(
                 const parsed = JSON.parse(saved);
                 if (Array.isArray(parsed)) return parsed as Version[];
             }
-        } catch { /* ignore */ }
+        } catch {
+            /* ignore */
+        }
         return [];
     });
 
-    const remoteMapped: Version[] = (remoteVersions ?? []).map((v: DbVersion) => ({
-        content: v.content,
-        timestamp: new Date(v.created_at).getTime(),
-    }));
+    const remoteMapped: Version[] = (remoteVersions ?? []).map(
+        (v: DbVersion) => ({
+            content: v.content,
+            timestamp: new Date(v.created_at).getTime(),
+        }),
+    );
 
-    const versions =
-        remoteMapped.length > 0
-            ? remoteMapped
-            : localVersions;
+    const versions = remoteMapped.length > 0 ? remoteMapped : localVersions;
 
     const saveVersion = useCallback(
         (content: string) => {
@@ -1681,7 +1778,9 @@ export function useVersionHistory(
             });
 
             if (activeTabId) {
-                saveVersionMut.mutate({ data: { tabId: activeTabId, content } });
+                saveVersionMut.mutate({
+                    data: { tabId: activeTabId, content },
+                });
             }
         },
         [activeTabId, saveVersionMut],
@@ -1716,12 +1815,9 @@ const { versions, saveVersion } = useVersionHistory((content) => {
 to:
 
 ```tsx
-const { versions, saveVersion } = useVersionHistory(
-    (content) => {
-        updateTabContent(activeTabId, content);
-    },
-    activeTabId,
-);
+const { versions, saveVersion } = useVersionHistory((content) => {
+    updateTabContent(activeTabId, content);
+}, activeTabId);
 ```
 
 - [ ] **Step 3: Commit**
@@ -1736,6 +1832,7 @@ git commit -m "refactor: useVersionHistory to consume TanStack Query + sync to T
 ### Task 22: Create localStorage migration hook
 
 **Files:**
+
 - Create: `src/hooks/useLocalStorageMigration.ts`
 
 - [ ] **Step 1: Write `src/hooks/useLocalStorageMigration.ts`**
@@ -1806,11 +1903,15 @@ export function useLocalStorageMigration(activeTabId: string) {
                     const versions = JSON.parse(versionsRaw);
                     if (Array.isArray(versions)) {
                         const activeTab =
-                            tabs.find((t) => t.id === activeTabIdRaw) ?? tabs[0];
+                            tabs.find((t) => t.id === activeTabIdRaw) ??
+                            tabs[0];
                         if (activeTab) {
                             for (const v of versions.slice(0, 50)) {
                                 await saveVersion.mutateAsync({
-                                    data: { tabId: activeTab.id, content: v.content },
+                                    data: {
+                                        tabId: activeTab.id,
+                                        content: v.content,
+                                    },
                                 });
                             }
                         }
@@ -1850,6 +1951,7 @@ git commit -m "feat: add localStorage to Turso migration on first login"
 ### Task 23: Update tsconfig.json for TanStack Start
 
 **Files:**
+
 - Modify: `tsconfig.json`
 
 - [ ] **Step 1: Update `tsconfig.json`**
@@ -1890,6 +1992,7 @@ git commit -m "chore: update tsconfig for TanStack Start"
 ### Task 24: Delete old entry points and test files
 
 **Files:**
+
 - Delete: `index.tsx`
 - Delete: `App.test.tsx`
 - Delete: `App.integration.test.tsx`
@@ -1916,6 +2019,7 @@ git commit -m "chore: remove old Vite entry point and stale test files"
 ### Task 25: Verify the build
 
 **Files:**
+
 - None (verification only)
 
 - [ ] **Step 1: Start the dev server**
@@ -1923,6 +2027,7 @@ git commit -m "chore: remove old Vite entry point and stale test files"
 ```bash
 npx vinxi dev
 ```
+
 Expected: TanStack Start dev server starts on port 3000. Visit `http://localhost:3000`.
 
 - [ ] **Step 2: Verify auth flow**
@@ -1959,6 +2064,7 @@ Expected: TanStack Start dev server starts on port 3000. Visit `http://localhost
 ```bash
 npm test
 ```
+
 Expected: tests that don't depend on localStorage persistence should pass. Tests that depended on the old hook internals may need updates (covered in follow-up tasks).
 
 - [ ] **Step 7: Run build**
@@ -1966,6 +2072,7 @@ Expected: tests that don't depend on localStorage persistence should pass. Tests
 ```bash
 npx vinxi build
 ```
+
 Expected: production build succeeds.
 
 ---
@@ -1973,6 +2080,7 @@ Expected: production build succeeds.
 ### Task 26: Update Netlify deployment config
 
 **Files:**
+
 - Create: `netlify.toml` (or update existing)
 
 - [ ] **Step 1: Write `netlify.toml`**
