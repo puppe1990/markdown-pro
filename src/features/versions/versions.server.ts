@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
-import { getWebRequest } from '@tanstack/react-start/server';
+import { getRequest } from '@tanstack/react-start/server';
 import { auth } from '@/src/features/auth/auth';
 import { getDb } from '@/src/db/client';
 
@@ -11,7 +11,7 @@ export interface Version {
 }
 
 function requireAuth() {
-    const request = getWebRequest();
+    const request = getRequest();
     if (!request) throw new Error('No request available in server context');
     return auth.api.getSession({ headers: request.headers });
 }
