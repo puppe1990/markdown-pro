@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getVersions, saveVersion } from './versions.server';
+import { getVersions, saveVersion } from './versions.functions';
 
 export function useVersions(tabId: string | undefined) {
     return useQuery({

@@ -1,7 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getRequest } from '@tanstack/react-start/server';
-import { auth } from '@/src/features/auth/auth';
-import { getDb } from '@/src/db/client';
 
 interface TabRow {
     id: string;
@@ -19,9 +17,10 @@ export interface Tab {
     content: string;
 }
 
-function requireAuth() {
+async function requireAuth() {
     const request = getRequest();
     if (!request) throw new Error('No request available in server context');
+    const { auth } = await import('@/src/features/auth/auth');
     return auth.api.getSession({ headers: request.headers });
 }
 
@@ -29,23 +28,26 @@ function tabRowToTab(row: TabRow): Tab {
     return { id: row.id, name: row.name, content: row.content };
 }
 
-export const getTabs = createServerFn({ method: 'GET' }).handler(async (): Promise<Tab[]> => {
-    const session = await requireAuth();
-    if (!session) throw new Error('Unauthorized');
+export const getTabs = createServerFn({ method: 'GET' }).handler(
+    async (): Promise<Tab[]> => {
+        const session = await requireAuth();
+        if (!session) throw new Error('Unauthorized');
 
-    const db = getDb();
-    const result = await db.execute({
-        sql: `SELECT id, user_id, name, content, position, created_at, updated_at
+        const db = await (await import('@/src/db/client')).getDbReady();
+        const result = await db.execute({
+            sql: `SELECT id, user_id, name, content, position, created_at, updated_at
               FROM tabs WHERE user_id = ? ORDER BY position`,
-        args: [session.user.id],
-    });
+            args: [session.user.id],
+        });
 
-    return (result.rows as unknown as TabRow[]).map(tabRowToTab);
-});
+        return (result.rows as unknown as TabRow[]).map(tabRowToTab);
+    },
+);
 
 export const createTab = createServerFn({ method: 'POST' })
-    .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+    .inputValidator((data: unknown) => {
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         const d = data as Record<string, unknown>;
         return {
             id: String(d.id),
@@ -56,12 +58,14 @@ export const createTab = createServerFn({ method: 'POST' })
         const session = await requireAuth();
         if (!session) throw new Error('Unauthorized');
 
-        const db = getDb();
+        const db = await (await import('@/src/db/client')).getDbReady();
         const countResult = await db.execute({
             sql: 'SELECT COUNT(*) as count FROM tabs WHERE user_id = ?',
             args: [session.user.id],
         });
-        const position = Number((countResult.rows[0] as { count: number }).count);
+        const position = Number(
+            (countResult.rows[0] as { count: number }).count,
+        );
 
         const result = await db.execute({
             sql: `INSERT INTO tabs (id, user_id, name, content, position)
@@ -73,8 +77,9 @@ export const createTab = createServerFn({ method: 'POST' })
     });
 
 export const updateTab = createServerFn({ method: 'POST' })
-    .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+    .inputValidator((data: unknown) => {
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         const d = data as Record<string, unknown>;
         return {
             id: String(d.id),
@@ -86,7 +91,7 @@ export const updateTab = createServerFn({ method: 'POST' })
         const session = await requireAuth();
         if (!session) throw new Error('Unauthorized');
 
-        const db = getDb();
+        const db = await (await import('@/src/db/client')).getDbReady();
         const sets: string[] = [];
         const args: (string | number)[] = [];
 
@@ -110,15 +115,16 @@ export const updateTab = createServerFn({ method: 'POST' })
     });
 
 export const deleteTab = createServerFn({ method: 'POST' })
-    .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+    .inputValidator((data: unknown) => {
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         return { id: String((data as Record<string, unknown>).id) };
     })
     .handler(async ({ data }): Promise<void> => {
         const session = await requireAuth();
         if (!session) throw new Error('Unauthorized');
 
-        const db = getDb();
+        const db = await (await import('@/src/db/client')).getDbReady();
         await db.execute({
             sql: 'DELETE FROM tabs WHERE id = ? AND user_id = ?',
             args: [data.id, session.user.id],
@@ -126,8 +132,9 @@ export const deleteTab = createServerFn({ method: 'POST' })
     });
 
 export const reorderTab = createServerFn({ method: 'POST' })
-    .validator((data: unknown) => {
-        if (typeof data !== 'object' || data === null) throw new Error('Invalid input');
+    .inputValidator((data: unknown) => {
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
         const d = data as Record<string, unknown>;
         return { id: String(d.id), position: Number(d.position) };
     })
@@ -135,7 +142,7 @@ export const reorderTab = createServerFn({ method: 'POST' })
         const session = await requireAuth();
         if (!session) throw new Error('Unauthorized');
 
-        const db = getDb();
+        const db = await (await import('@/src/db/client')).getDbReady();
         await db.execute({
             sql: 'UPDATE tabs SET position = ? WHERE id = ? AND user_id = ?',
             args: [data.position, data.id, session.user.id],

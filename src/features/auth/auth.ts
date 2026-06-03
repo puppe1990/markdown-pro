@@ -1,13 +1,26 @@
 import { betterAuth } from 'better-auth';
-import { getDb } from '@/src/db/client';
+import { LibsqlDialect } from '@libsql/kysely-libsql';
+import { authDb } from '@/src/db/authDb';
+import { resolveDatabaseConfig } from '@/src/db/resolveDbUrl';
 
-const db = getDb();
+function createAuthDatabase() {
+    const config = resolveDatabaseConfig();
+
+    if (config.authToken) {
+        return {
+            dialect: new LibsqlDialect({
+                url: config.url,
+                authToken: config.authToken,
+            }),
+            type: 'sqlite' as const,
+        };
+    }
+
+    return authDb;
+}
 
 export const auth = betterAuth({
-    database: {
-        provider: 'sqlite',
-        db,
-    },
+    database: createAuthDatabase(),
     emailAndPassword: {
         enabled: true,
         autoSignIn: true,

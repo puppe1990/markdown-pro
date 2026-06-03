@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
-import { useVersions, useSaveVersion } from '@/src/features/versions/useVersions';
-import { Version as DbVersion } from '@/src/features/versions/versions.server';
+import {
+    useVersions,
+    useSaveVersion,
+} from '@/src/features/versions/useVersions';
+import { Version as DbVersion } from '@/src/features/versions/versions.functions';
 import { Version } from '@/types';
 
 export function useVersionHistory(
@@ -18,19 +21,20 @@ export function useVersionHistory(
                 const parsed = JSON.parse(saved);
                 if (Array.isArray(parsed)) return parsed as Version[];
             }
-        } catch { /* ignore */ }
+        } catch {
+            /* ignore */
+        }
         return [];
     });
 
-    const remoteMapped: Version[] = (remoteVersions ?? []).map((v: DbVersion) => ({
-        content: v.content,
-        timestamp: new Date(v.created_at).getTime(),
-    }));
+    const remoteMapped: Version[] = (remoteVersions ?? []).map(
+        (v: DbVersion) => ({
+            content: v.content,
+            timestamp: new Date(v.created_at).getTime(),
+        }),
+    );
 
-    const versions =
-        remoteMapped.length > 0
-            ? remoteMapped
-            : localVersions;
+    const versions = remoteMapped.length > 0 ? remoteMapped : localVersions;
 
     const saveVersion = useCallback(
         (content: string) => {
@@ -43,7 +47,9 @@ export function useVersionHistory(
             });
 
             if (activeTabId) {
-                saveVersionMut.mutate({ data: { tabId: activeTabId, content } });
+                saveVersionMut.mutate({
+                    data: { tabId: activeTabId, content },
+                });
             }
         },
         [activeTabId, saveVersionMut],

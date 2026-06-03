@@ -5,7 +5,7 @@ import {
     updateTab,
     deleteTab,
     type Tab,
-} from './tabs.server';
+} from './tabs.functions';
 
 export function useTabs() {
     return useQuery({
@@ -29,10 +29,15 @@ export function useUpdateTab() {
         onMutate: async (input) => {
             await qc.cancelQueries({ queryKey: ['tabs'] });
             const previous = qc.getQueryData<Tab[]>(['tabs']);
+            const { id, name, content } = input.data;
             qc.setQueryData<Tab[]>(['tabs'], (old) =>
                 old?.map((t) =>
-                    t.id === input.id
-                        ? { ...t, name: input.name ?? t.name, content: input.content ?? t.content }
+                    t.id === id
+                        ? {
+                              ...t,
+                              name: name ?? t.name,
+                              content: content ?? t.content,
+                          }
                         : t,
                 ),
             );
@@ -52,7 +57,9 @@ export function useDeleteTab() {
         onMutate: async (input) => {
             await qc.cancelQueries({ queryKey: ['tabs'] });
             const previous = qc.getQueryData<Tab[]>(['tabs']);
-            qc.setQueryData<Tab[]>(['tabs'], (old) => old?.filter((t) => t.id !== input.id));
+            qc.setQueryData<Tab[]>(['tabs'], (old) =>
+                old?.filter((t) => t.id !== input.data.id),
+            );
             return { previous };
         },
         onError: (_err, _input, context) => {

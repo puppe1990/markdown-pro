@@ -1,5 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getPreferences, setTheme, type Preferences } from './preferences.server';
+import {
+    getPreferences,
+    setTheme,
+    type Preferences,
+} from './preferences.functions';
 
 export function usePreferences() {
     return useQuery({
@@ -15,7 +19,9 @@ export function useSetTheme() {
         onMutate: async (input) => {
             await qc.cancelQueries({ queryKey: ['preferences'] });
             const previous = qc.getQueryData<Preferences>(['preferences']);
-            qc.setQueryData<Preferences>(['preferences'], { theme: input.theme });
+            qc.setQueryData<Preferences>(['preferences'], {
+                theme: input.theme,
+            });
             return { previous };
         },
         onError: (_err, _input, context) => {

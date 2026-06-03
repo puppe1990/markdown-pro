@@ -1,19 +1,33 @@
-import { createClient } from '@libsql/client';
+import { createClient, type Client } from '@libsql/client';
+import { migrateAppSchema } from './migrate';
+import { resolveDatabaseConfig } from './resolveDbUrl';
 
-let dbInstance: ReturnType<typeof createClient> | null = null;
+let dbInstance: Client | null = null;
+let initPromise: Promise<Client> | null = null;
 
-export function getDb() {
+async function initializeDb(): Promise<Client> {
+    const config = resolveDatabaseConfig();
+    const db = createClient(
+        config.authToken
+            ? { url: config.url, authToken: config.authToken }
+            : { url: config.url },
+    );
+    await migrateAppSchema(db);
+    dbInstance = db;
+    return db;
+}
+
+export async function getDbReady(): Promise<Client> {
     if (dbInstance) return dbInstance;
+    if (!initPromise) initPromise = initializeDb();
+    return initPromise;
+}
 
-    const url = process.env.TURSO_DATABASE_URL;
-    const authToken = process.env.TURSO_AUTH_TOKEN;
-
-    if (!url || !authToken) {
+export function getDb(): Client {
+    if (!dbInstance) {
         throw new Error(
-            'TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be set in environment variables',
+            'Database not ready. Call getDbReady() before getDb() in server handlers.',
         );
     }
-
-    dbInstance = createClient({ url, authToken });
     return dbInstance;
 }
