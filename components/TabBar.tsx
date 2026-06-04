@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Tab } from '../hooks/useTabManager';
 import ConfirmModal from './ConfirmModal';
+import {
+    borderSubtle,
+    surfaceBar,
+    tabActive,
+    tabInactive,
+} from '@/src/lib/ui-classes';
 
 interface Props {
     tabs: Tab[];
@@ -87,7 +93,9 @@ const TabBar: React.FC<Props> = ({
     };
 
     return (
-        <div className="flex items-center overflow-x-auto border-b border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm min-h-[40px]">
+        <div
+            className={`flex items-center overflow-x-auto border-b ${borderSubtle} ${surfaceBar} min-h-[42px]`}
+        >
             {tabs.map((tab) => (
                 <div
                     key={tab.id}
@@ -105,10 +113,8 @@ const TabBar: React.FC<Props> = ({
                             onSelect(tab.id);
                         }
                     }}
-                    className={`group flex items-center gap-1 px-3 py-2 text-sm cursor-pointer select-none shrink-0 border-r border-gray-200/60 dark:border-gray-700/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset ${
-                        tab.id === activeTabId
-                            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 text-blue-600 dark:text-blue-400 border-b-2 border-b-blue-500'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    className={`group flex items-center gap-1.5 px-4 py-2.5 text-sm cursor-pointer select-none shrink-0 border-r ${borderSubtle} transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset ${
+                        tab.id === activeTabId ? tabActive : tabInactive
                     }`}
                 >
                     {editingId === tab.id ? (
@@ -122,7 +128,7 @@ const TabBar: React.FC<Props> = ({
                                 if (e.key === 'Escape') setEditingId(null);
                             }}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-24 bg-transparent border-b border-blue-400 outline-none text-sm"
+                            className="w-28 bg-transparent border-b border-accent outline-none text-sm text-ink"
                         />
                     ) : (
                         <span
@@ -141,7 +147,7 @@ const TabBar: React.FC<Props> = ({
                             e.stopPropagation();
                             handleClose(tab);
                         }}
-                        className={`ml-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 w-4 h-4 flex items-center justify-center text-xs leading-none ${
+                        className={`ml-0.5 rounded-md hover:bg-ink-border/50 dark:hover:bg-ink-800 w-5 h-5 flex items-center justify-center text-sm leading-none text-ink-muted hover:text-ink ${
                             tab.id === activeTabId
                                 ? 'opacity-100'
                                 : 'opacity-0 group-hover:opacity-100'
@@ -154,7 +160,7 @@ const TabBar: React.FC<Props> = ({
             <button
                 aria-label="add tab"
                 onClick={onAdd}
-                className="px-3 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-lg leading-none"
+                className="px-4 py-2.5 text-ink-faint hover:text-accent hover:bg-accent-muted transition-colors text-xl leading-none font-light"
             >
                 +
             </button>

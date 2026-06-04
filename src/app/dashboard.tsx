@@ -15,6 +15,13 @@ import { useLocalStorageMigration } from '@/src/hooks/useLocalStorageMigration';
 import { useDebouncedSync } from '@/hooks/useDebouncedSync';
 import { useUpdateTab } from '@/src/features/tabs/useTabs';
 import { useSaveVersion } from '@/src/features/versions/useVersions';
+import {
+    appShell,
+    borderSubtle,
+    surfaceBar,
+    tabActive,
+    tabInactive,
+} from '@/src/lib/ui-classes';
 
 export const Route = createFileRoute('/dashboard')({
     component: DashboardPage,
@@ -134,14 +141,14 @@ function DashboardPage() {
 
     if (isPending) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+            <div className="flex items-center justify-center min-h-screen bg-paper dark:bg-ink-950">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-ink-border border-t-accent" />
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-screen font-sans antialiased bg-gray-50 dark:bg-gray-950">
+        <div className={appShell}>
             <Header
                 theme={theme}
                 toggleTheme={toggleTheme}
@@ -167,24 +174,22 @@ function DashboardPage() {
                 onClose={closeTab}
                 onRename={renameTab}
             />
-            <main className="flex-grow flex flex-col md:flex-row overflow-hidden">
-                <div className="md:hidden flex border-b border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+            <main className="flex-grow flex flex-col md:flex-row overflow-hidden workspace-grid">
+                <div
+                    className={`md:hidden flex border-b ${borderSubtle} ${surfaceBar}`}
+                >
                     <button
                         onClick={() => setActiveView('editor')}
-                        className={`flex-1 p-4 text-sm font-semibold transition-all duration-200 ${
-                            activeView === 'editor'
-                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                                : 'bg-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        className={`flex-1 p-4 text-sm font-semibold transition-colors ${
+                            activeView === 'editor' ? tabActive : tabInactive
                         }`}
                     >
                         Write
                     </button>
                     <button
                         onClick={() => setActiveView('preview')}
-                        className={`flex-1 p-4 text-sm font-semibold transition-all duration-200 ${
-                            activeView === 'preview'
-                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                                : 'bg-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        className={`flex-1 p-4 text-sm font-semibold transition-colors ${
+                            activeView === 'preview' ? tabActive : tabInactive
                         }`}
                     >
                         Preview
@@ -200,7 +205,7 @@ function DashboardPage() {
                     />
                 </div>
                 <div
-                    className={`w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'} md:block ${isReadingMode ? '!w-full !block' : 'md:w-1/2'} border-l border-gray-200/60 dark:border-gray-700/60`}
+                    className={`w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'} md:block ${isReadingMode ? '!w-full !block' : 'md:w-1/2'} border-l ${borderSubtle}`}
                 >
                     <Preview markdown={markdown} />
                 </div>

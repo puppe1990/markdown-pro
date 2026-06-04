@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Toolbar from './Toolbar';
 import { addImage } from '../services/imageService';
+import { editorPane } from '@/src/lib/ui-classes';
 
 interface EditorProps {
     value: string;
@@ -75,7 +76,7 @@ const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-white to-gray-50/50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950/50">
+        <div className={editorPane}>
             <Toolbar textareaRef={textareaRef} setMarkdown={onChange} />
             <div className="flex-grow relative">
                 <textarea
@@ -94,10 +95,10 @@ const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
                     onDragLeave={() => setIsDragOver(false)}
                     onDrop={handleDrop}
                     onPaste={handlePaste}
-                    className={`absolute inset-0 p-6 md:p-8 w-full h-full resize-none focus:outline-none bg-transparent text-gray-800 dark:text-gray-200 font-mono text-[15px] leading-7 placeholder:text-gray-400 dark:placeholder:text-gray-500 selection:bg-blue-200 dark:selection:bg-blue-900/50 transition-colors ${
-                        isDragOver ? 'bg-blue-50/70 dark:bg-blue-950/25' : ''
+                    className={`absolute inset-0 p-6 md:p-10 w-full h-full resize-none focus:outline-none bg-transparent text-ink dark:text-stone-200 font-mono text-[15px] leading-[1.75] placeholder:text-ink-faint selection:bg-accent-muted transition-colors ${
+                        isDragOver ? 'bg-accent-muted/80' : ''
                     }`}
-                    placeholder="Start writing your markdown here..."
+                    placeholder="Start writing — markdown, images, and more…"
                     spellCheck="false"
                 />
             </div>

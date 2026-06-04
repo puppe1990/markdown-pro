@@ -46,7 +46,9 @@ describe('LoginPage', () => {
         } as unknown as ReturnType<typeof useSession>);
 
         const { container } = render(<LoginPage />);
-        expect(screen.getByText('Markdown Pro')).toBeInTheDocument();
+        expect(
+            screen.getByRole('heading', { name: /markdown pro/i }),
+        ).toBeInTheDocument();
         expect(container.querySelector('input[type="email"]')).toBeTruthy();
         expect(container.querySelector('input[type="password"]')).toBeTruthy();
         expect(

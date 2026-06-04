@@ -15,12 +15,22 @@ import {
     SaveIcon,
     SpinnerIcon,
 } from './icons';
+import { BrandMark } from './BrandMark';
 import {
     exportAsMarkdown,
     exportAsPdf,
     exportAsDocx,
 } from '../services/exportService';
 import { SyncStatus } from '../hooks/useDebouncedSync';
+import {
+    borderSubtle,
+    btnIcon,
+    btnIconActive,
+    btnPrimary,
+    dropdownItem,
+    dropdownMenu,
+    surfaceBar,
+} from '@/src/lib/ui-classes';
 
 interface HeaderProps {
     theme: 'light' | 'dark';
@@ -82,7 +92,6 @@ const Header: React.FC<HeaderProps> = ({
         const file = event.target.files?.[0];
         if (!file) return;
 
-        // Check if file is markdown
         if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
             alert('Please select a valid Markdown file (.md or .markdown)');
             return;
@@ -100,7 +109,6 @@ const Header: React.FC<HeaderProps> = ({
         };
         reader.readAsText(file);
 
-        // Reset input to allow selecting the same file again
         if (event.target) {
             event.target.value = '';
         }
@@ -114,7 +122,6 @@ const Header: React.FC<HeaderProps> = ({
                 setIsCopied(false);
             }, 2000);
         } catch {
-            // Fallback for older browsers
             const textArea = document.createElement('textarea');
             textArea.value = markdownContent;
             textArea.style.position = 'fixed';
@@ -156,18 +163,22 @@ const Header: React.FC<HeaderProps> = ({
             document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const syncBtnClass =
+        syncStatus === 'saved'
+            ? 'p-2 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
+            : syncStatus === 'error'
+              ? 'p-2 rounded-lg bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400'
+              : btnIcon;
+
     return (
-        <header className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-gray-200/60 dark:border-gray-700/60 bg-gradient-to-r from-white via-gray-50/50 to-white dark:from-gray-900 dark:via-gray-800/50 dark:to-gray-900 text-gray-900 dark:text-gray-100 flex-shrink-0 shadow-sm backdrop-blur-sm">
-            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-gray-100 dark:via-gray-200 dark:to-gray-100 bg-clip-text text-transparent">
-                Markdown{' '}
-                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                    Pro
-                </span>
-            </h1>
-            <div className="flex items-center space-x-3">
+        <header
+            className={`relative z-20 flex items-center justify-between px-5 py-3.5 border-b ${borderSubtle} ${surfaceBar} text-ink dark:text-stone-100 flex-shrink-0`}
+        >
+            <BrandMark size="sm" />
+            <div className="flex items-center gap-1">
                 <button
                     onClick={() => importInputRef.current?.click()}
-                    className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                    className={btnIcon}
                     title="Import Markdown"
                 >
                     <UploadIcon className="w-5 h-5" />
@@ -182,11 +193,11 @@ const Header: React.FC<HeaderProps> = ({
                 />
                 <button
                     onClick={handleCopy}
-                    className={`p-2.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${
+                    className={
                         isCopied
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                            : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
-                    }`}
+                            ? 'p-2 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
+                            : btnIcon
+                    }
                     title={isCopied ? 'Copied!' : 'Copy Markdown'}
                 >
                     {isCopied ? (
@@ -198,13 +209,7 @@ const Header: React.FC<HeaderProps> = ({
                 {syncStatus && (
                     <button
                         onClick={onSyncClick}
-                        className={`p-2.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${
-                            syncStatus === 'saved'
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                                : syncStatus === 'error'
-                                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300'
-                                  : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
-                        }`}
+                        className={syncBtnClass}
                         title={
                             syncStatus === 'saved'
                                 ? 'All changes saved'
@@ -226,25 +231,21 @@ const Header: React.FC<HeaderProps> = ({
                 )}
                 <button
                     onClick={onHistoryClick}
-                    className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                    className={btnIcon}
                     title="Version History"
                 >
                     <ClockIcon className="w-5 h-5" />
                 </button>
                 <button
                     onClick={onReadingModeToggle}
-                    className={`p-2.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${
-                        isReadingMode
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                            : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
-                    }`}
+                    className={isReadingMode ? btnIconActive : btnIcon}
                     title={isReadingMode ? 'Exit Reading Mode' : 'Reading Mode'}
                 >
                     <BookOpenIcon className="w-5 h-5" />
                 </button>
                 <button
                     onClick={toggleTheme}
-                    className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                    className={btnIcon}
                     title="Toggle Theme"
                 >
                     {theme === 'light' ? (
@@ -257,18 +258,18 @@ const Header: React.FC<HeaderProps> = ({
                     <div className="relative" ref={userMenuRef}>
                         <button
                             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                            className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                            className={btnIcon}
                             title="User Menu"
                         >
                             <UserIcon className="w-5 h-5" />
                         </button>
                         {isUserMenuOpen && (
-                            <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-2 z-50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-200">
-                                <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700/50 mb-1">
-                                    <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium">
+                            <div className={`${dropdownMenu} w-60`}>
+                                <div className="px-3 py-2.5 border-b border-ink-border/40 dark:border-ink-border-dark/40 mb-1">
+                                    <p className="text-xs text-ink-faint uppercase tracking-wide font-medium">
                                         Signed in as
                                     </p>
-                                    <p className="text-sm text-gray-700 dark:text-gray-200 truncate mt-0.5">
+                                    <p className="text-sm text-ink truncate mt-0.5">
                                         {userEmail}
                                     </p>
                                 </div>
@@ -277,7 +278,7 @@ const Header: React.FC<HeaderProps> = ({
                                         setIsUserMenuOpen(false);
                                         onSignOut?.();
                                     }}
-                                    className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors duration-150 font-medium"
+                                    className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg mx-1 transition-colors font-medium"
                                 >
                                     Sign Out
                                 </button>
@@ -285,29 +286,29 @@ const Header: React.FC<HeaderProps> = ({
                         )}
                     </div>
                 )}
-                <div className="relative" ref={exportMenuRef}>
+                <div className="relative ml-1" ref={exportMenuRef}>
                     <button
                         onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-                        className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+                        className={`${btnPrimary} py-2`}
                         title="Export Document"
                     >
                         <DownloadIcon className="w-5 h-5" />
                         <span className="hidden sm:inline">Export</span>
                     </button>
                     {isExportMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 z-50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className={`${dropdownMenu} w-52`}>
                             <button
                                 onClick={() => handleExport('md')}
-                                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg"
+                                className={dropdownItem}
                             >
-                                <FileTextIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                <FileTextIcon className="w-4 h-4 text-accent" />
                                 <span className="font-medium">
                                     Markdown (.md)
                                 </span>
                             </button>
                             <button
                                 onClick={() => handleExport('pdf')}
-                                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg"
+                                className={dropdownItem}
                             >
                                 <FileImage className="w-4 h-4 text-red-600 dark:text-red-400" />
                                 <span className="font-medium">
@@ -316,9 +317,9 @@ const Header: React.FC<HeaderProps> = ({
                             </button>
                             <button
                                 onClick={() => handleExport('docx')}
-                                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-700/50 flex items-center space-x-3 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg"
+                                className={dropdownItem}
                             >
-                                <FileIcon className="w-4 h-4 text-blue-700 dark:text-blue-500" />
+                                <FileIcon className="w-4 h-4 text-ink-muted" />
                                 <span className="font-medium">
                                     Word Document
                                 </span>

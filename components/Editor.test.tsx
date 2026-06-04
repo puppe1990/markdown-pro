@@ -24,7 +24,7 @@ describe('Editor', () => {
     it('renders textarea with placeholder', () => {
         render(<Editor value="" onChange={() => {}} />);
         expect(
-            screen.getByPlaceholderText(/start writing your markdown/i),
+            screen.getByPlaceholderText(/start writing/i),
         ).toBeInTheDocument();
     });
 

@@ -1,7 +1,7 @@
 import type { ManifestOptions } from 'vite-plugin-pwa';
 
-export const PWA_THEME_COLOR = '#2563eb';
-export const PWA_BACKGROUND_COLOR = '#ffffff';
+export const PWA_THEME_COLOR = '#0d9488';
+export const PWA_BACKGROUND_COLOR = '#f8f6f3';
 
 export const pwaManifest: Partial<ManifestOptions> = {
     name: 'Markdown Pro',
