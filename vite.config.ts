@@ -19,4 +19,14 @@ export default defineConfig({
         netlify(),
         viteReact(),
     ],
+    build: {
+        rollupOptions: {
+            external: [
+                'libsql',
+                '@libsql/linux-x64-gnu',
+                '@libsql/darwin-arm64',
+                '@libsql/darwin-x64',
+            ],
+        },
+    },
 });
