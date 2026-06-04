@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
     getTabs,
     createTab,
@@ -6,7 +6,19 @@ import {
     deleteTab,
     type Tab,
 } from './tabs.functions';
+import { useOptimisticMutation } from '@/src/lib/use-optimistic-mutation';
 
+type TabVariables = {
+    data: {
+        id: string;
+        name?: string;
+        content?: string;
+    };
+};
+
+/**
+ * Fetches the list of tabs for the current user.
+ */
 export function useTabs() {
     return useQuery({
         queryKey: ['tabs'],
@@ -14,57 +26,63 @@ export function useTabs() {
     });
 }
 
+/**
+ * Mutation to create a new tab.
+ * Performs optimistic update: the tab appears in cache immediately (appended).
+ * Rolls back the cache on error. Always invalidates on settle for server truth.
+ *
+ * Example:
+ *   const createTab = useCreateTab();
+ *   createTab.mutate({ data: { id: 'tab-123', name: 'Untitled' } });
+ */
 export function useCreateTab() {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: createTab,
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['tabs'] }),
+    return useOptimisticMutation<TabVariables>(createTab, {
+        queryKey: ['tabs'],
+        updater: (old, input) => [
+            ...((old as Tab[] | undefined) ?? []),
+            {
+                id: input.data.id,
+                name: input.data.name ?? 'Untitled',
+                content: '',
+            },
+        ],
     });
 }
 
+/**
+ * Mutation to update a tab's name and/or content with optimistic update.
+ *
+ * Example:
+ *   const updateTab = useUpdateTab();
+ *   updateTab.mutate({ data: { id: 'tab-123', name: 'New Name' } });
+ */
 export function useUpdateTab() {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: updateTab,
-        onMutate: async (input) => {
-            await qc.cancelQueries({ queryKey: ['tabs'] });
-            const previous = qc.getQueryData<Tab[]>(['tabs']);
-            const { id, name, content } = input.data;
-            qc.setQueryData<Tab[]>(['tabs'], (old) =>
-                old?.map((t) =>
-                    t.id === id
-                        ? {
-                              ...t,
-                              name: name ?? t.name,
-                              content: content ?? t.content,
-                          }
-                        : t,
-                ),
-            );
-            return { previous };
-        },
-        onError: (_err, _input, context) => {
-            qc.setQueryData(['tabs'], context?.previous);
-        },
-        onSettled: () => qc.invalidateQueries({ queryKey: ['tabs'] }),
+    return useOptimisticMutation<TabVariables>(updateTab, {
+        queryKey: ['tabs'],
+        updater: (old, input) =>
+            (old as Tab[] | undefined)?.map((t) =>
+                t.id === input.data.id
+                    ? {
+                          ...t,
+                          name: input.data.name ?? t.name,
+                          content: input.data.content ?? t.content,
+                      }
+                    : t,
+            ),
     });
 }
 
+/**
+ * Mutation to delete a tab, optimistically removing it from the cache.
+ *
+ * Example:
+ *   const deleteTab = useDeleteTab();
+ *   deleteTab.mutate({ data: { id: 'tab-123' } });
+ */
 export function useDeleteTab() {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: deleteTab,
-        onMutate: async (input) => {
-            await qc.cancelQueries({ queryKey: ['tabs'] });
-            const previous = qc.getQueryData<Tab[]>(['tabs']);
-            qc.setQueryData<Tab[]>(['tabs'], (old) =>
-                old?.filter((t) => t.id !== input.data.id),
-            );
-            return { previous };
-        },
-        onError: (_err, _input, context) => {
-            qc.setQueryData(['tabs'], context?.previous);
-        },
-        onSettled: () => qc.invalidateQueries({ queryKey: ['tabs'] }),
+    return useOptimisticMutation<TabVariables>(deleteTab, {
+        queryKey: ['tabs'],
+        updater: (old, input) =>
+            (old as Tab[] | undefined)?.filter((t) => t.id !== input.data.id),
     });
 }
