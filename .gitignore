@@ -26,4 +26,8 @@ dist-ssr
 .worktrees/
 .env
 .timestamp_*
+.tanstack/
 data/
+
+# Local Netlify folder
+.netlify
