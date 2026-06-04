@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
-import { signIn } from '@/src/features/auth/auth-client';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from '@/src/features/auth/auth-client';
 import { getAuthErrorMessage } from '@/src/features/auth/auth-errors';
 import { EyeIcon, EyeOffIcon } from '@/components/icons';
 
@@ -43,6 +43,7 @@ export function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { data: session } = useSession();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,17 +61,32 @@ export function LoginPage() {
             const result = await signIn.email({ email, password });
             if (result.error) {
                 setError(getAuthErrorMessage(result.error));
+                setLoading(false);
                 return;
             }
-            navigate({ to: '/dashboard' });
+            // Success: do NOT navigate immediately.
+            // After signOut, the client session atom is null. signIn.email succeeds
+            // (sets cookie server-side) but the local session state updates only
+            // asynchronously (via atom listener 10ms timeout + /get-session fetch
+            // in better-auth). Navigating now makes Dashboard mount while session
+            // still null -> its guard redirects back to /login, unmounting this
+            // instance (fields reset to '', no error shown). The effect below waits
+            // for session to appear before navigating. This is the post-logout
+            // "first login" race.
         } catch {
             setError(
                 "We couldn't reach the server. Please check your internet connection and try again.",
             );
-        } finally {
             setLoading(false);
         }
+        // On auth success we leave loading=true; navigation unmounts us shortly.
     };
+
+    useEffect(() => {
+        if (session) {
+            navigate({ to: '/dashboard' });
+        }
+    }, [session, navigate]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-950 dark:via-indigo-950 dark:to-purple-950">
