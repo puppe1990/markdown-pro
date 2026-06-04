@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
     {
-        ignores: ['dist', 'node_modules'],
+        ignores: ['dist', 'node_modules', '.worktrees'],
     },
     {
         files: ['**/*.{ts,tsx}'],
@@ -31,6 +31,12 @@ export default tseslint.config(
                 'warn',
                 { allowConstantExport: true },
             ],
+        },
+    },
+    {
+        files: ['src/app/**/*.tsx'],
+        rules: {
+            'react-refresh/only-export-components': 'off',
         },
     },
     eslintConfigPrettier,
