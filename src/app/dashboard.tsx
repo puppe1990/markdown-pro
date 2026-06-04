@@ -23,8 +23,6 @@ function DashboardPage() {
     const { data: prefs } = usePreferences();
     const { mutate: setThemeMutate } = useSetTheme();
 
-    const preferredTheme = prefs?.theme ?? 'light';
-
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('theme') as
@@ -73,12 +71,18 @@ function DashboardPage() {
     useLocalStorageMigration();
 
     useEffect(() => {
-        if (preferredTheme === 'dark') {
+        if (theme === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
-    }, [preferredTheme]);
+    }, [theme]);
+
+    useEffect(() => {
+        if (prefs?.theme && prefs.theme !== theme) {
+            setTheme(prefs.theme);
+        }
+    }, [prefs?.theme, theme, setTheme]);
 
     useEffect(() => {
         if (isPending) return;
