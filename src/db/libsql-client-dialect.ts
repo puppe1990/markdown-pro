@@ -10,7 +10,11 @@ import {
     SqliteIntrospector,
     SqliteQueryCompiler,
 } from 'kysely';
-import { openHttp, type HttpStream } from '@libsql/hrana-client';
+import {
+    openHttp,
+    parseLibsqlUrl,
+    type HttpStream,
+} from '@libsql/hrana-client';
 
 export interface LibsqlHranaDialectConfig {
     url: string;
@@ -45,7 +49,10 @@ class LibsqlHranaDriver implements Driver {
     private client: ReturnType<typeof openHttp>;
 
     constructor(config: LibsqlHranaDialectConfig) {
-        this.client = openHttp(new URL(config.url), config.authToken);
+        const parsed = parseLibsqlUrl(config.url);
+        const httpUrl = parsed.hranaHttpUrl ?? config.url;
+        const authToken = config.authToken ?? parsed.authToken;
+        this.client = openHttp(new URL(httpUrl), authToken);
     }
 
     async init(): Promise<void> {}

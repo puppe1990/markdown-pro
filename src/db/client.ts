@@ -1,4 +1,8 @@
-import { openHttp, type HttpStream } from '@libsql/hrana-client';
+import {
+    openHttp,
+    parseLibsqlUrl,
+    type HttpStream,
+} from '@libsql/hrana-client';
 import { migrateAppSchema } from './migrate';
 import { resolveDatabaseConfig } from './resolveDbUrl';
 
@@ -7,7 +11,10 @@ let initPromise: Promise<void> | null = null;
 
 async function initializeDb(): Promise<void> {
     const config = resolveDatabaseConfig();
-    const client = openHttp(new URL(config.url), config.authToken);
+    const parsed = parseLibsqlUrl(config.url);
+    const httpUrl = parsed.hranaHttpUrl ?? config.url;
+    const authToken = config.authToken ?? parsed.authToken;
+    const client = openHttp(new URL(httpUrl), authToken);
     const stream = client.openStream();
     await migrateAppSchema(stream);
     streamInstance = stream;
