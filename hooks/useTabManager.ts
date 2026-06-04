@@ -66,11 +66,24 @@ export function useTabManager() {
             return;
         }
 
-        if (
-            addingTabRef.current &&
-            remoteTabs.some((t) => t.id === addingTabRef.current)
-        ) {
-            addingTabRef.current = null;
+        if (addingTabRef.current) {
+            const isInRemote = remoteTabs.some(
+                (t) => t.id === addingTabRef.current,
+            );
+            if (isInRemote) {
+                addingTabRef.current = null;
+            } else {
+                const pendingId = createTabMut.isPending
+                    ? (
+                          createTabMut.variables as
+                              | { data?: { id?: string } }
+                              | undefined
+                      )?.data?.id
+                    : undefined;
+                if (pendingId !== addingTabRef.current) {
+                    addingTabRef.current = null;
+                }
+            }
         }
 
         setActiveTabIdState((prev) => {

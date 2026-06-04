@@ -299,10 +299,24 @@ describe('useTabManager', () => {
 
     it('keeps new tab active after addTab when remoteTabs data is loaded', async () => {
         const remoteTabs = [{ id: 'srv-1', name: 'Saved', content: '# Note' }];
+        let lastCreateVars:
+            | { data: { id: string; name?: string } }
+            | undefined = undefined;
 
         vi.doMock('@/src/features/tabs/useTabs', () => ({
             useTabs: () => ({ data: remoteTabs, isLoading: false }),
-            useCreateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+            useCreateTab: () => ({
+                mutate: (v: { data: { id: string; name?: string } }) => {
+                    lastCreateVars = v;
+                },
+                mutateAsync: vi.fn(),
+                get isPending() {
+                    return true;
+                },
+                get variables() {
+                    return lastCreateVars;
+                },
+            }),
             useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
             useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
         }));
