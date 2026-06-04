@@ -7,14 +7,47 @@ const mockCreateTab = vi.fn();
 const mockUpdateTab = vi.fn();
 const mockDeleteTab = vi.fn();
 
+type CreateVars = { data: { id: string; name?: string } };
+
+type MutResult = {
+    mutate: (vars: CreateVars) => void;
+    mutateAsync: ReturnType<typeof vi.fn>;
+    isPending: boolean;
+    variables: CreateVars | undefined;
+};
+
 let remoteTabsState: { data: Tab[] | undefined; isLoading: boolean } = {
     data: undefined,
     isLoading: true,
 };
 
+let createMutState: { isPending: boolean; variables: CreateVars | undefined } =
+    {
+        isPending: false,
+        variables: undefined,
+    };
+
+function makeCreateMut(): MutResult {
+    return {
+        mutate: (vars: CreateVars) => {
+            createMutState.isPending = true;
+            createMutState.variables = vars;
+            mockCreateTab(vars);
+            // note: in real, onMutate etc would run sync; here we let test control settle
+        },
+        mutateAsync: vi.fn(),
+        get isPending() {
+            return createMutState.isPending;
+        },
+        get variables() {
+            return createMutState.variables;
+        },
+    };
+}
+
 vi.mock('@/src/features/tabs/useTabs', () => ({
     useTabs: () => remoteTabsState,
-    useCreateTab: () => ({ mutate: mockCreateTab, mutateAsync: vi.fn() }),
+    useCreateTab: () => makeCreateMut(),
     useUpdateTab: () => ({ mutate: mockUpdateTab, mutateAsync: vi.fn() }),
     useDeleteTab: () => ({ mutate: mockDeleteTab, mutateAsync: vi.fn() }),
 }));
@@ -37,6 +70,7 @@ describe('useTabManager persistence', () => {
         mockUpdateTab.mockReset();
         mockDeleteTab.mockReset();
         remoteTabsState = { data: undefined, isLoading: true };
+        createMutState = { isPending: false, variables: undefined };
     });
 
     it('shows tab content loaded from the server after login', () => {
@@ -114,6 +148,39 @@ describe('useTabManager persistence', () => {
 
         expect(mockUpdateTab).toHaveBeenCalledWith({
             data: { id: 'server-tab-1', content: '# Hello again' },
+        });
+    });
+
+    it('recovers activeTabId to existing tab and clears pending when remote update shows create did not appear (rollback case)', async () => {
+        const existing = [{ id: 'srv-1', name: 'Saved', content: '# Note' }];
+        remoteTabsState = { data: existing, isLoading: false };
+
+        const { result, rerender } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
+
+        act(() => {
+            result.current.addTab();
+        });
+
+        const pendingId = result.current.activeTabId;
+        expect(pendingId).not.toBe('srv-1');
+
+        // Simulate create settled (failed/rolled back) + remote-tabs update:
+        // now isPending=false and server data does not contain the tab.
+        // The logic must clear adding ref and recover activeTabId.
+        act(() => {
+            createMutState.isPending = false;
+            remoteTabsState = {
+                data: [...existing], // new array ref, no pending tab
+                isLoading: false,
+            };
+        });
+        rerender();
+
+        await waitFor(() => {
+            expect(result.current.activeTabId).toBe('srv-1');
+            expect(result.current.activeTabId).not.toBe(pendingId);
         });
     });
 });
