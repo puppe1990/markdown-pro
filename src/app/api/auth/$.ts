@@ -10,8 +10,19 @@ export const Route = createFileRoute('/api/auth/$')({
                 return auth.handler(request);
             },
             POST: async ({ request }) => {
-                await getDbReady();
-                return auth.handler(request);
+                try {
+                    await getDbReady();
+                    return await auth.handler(request);
+                } catch (err) {
+                    console.error('Auth handler error:', {
+                        message:
+                            err instanceof Error ? err.message : String(err),
+                        stack: err instanceof Error ? err.stack : undefined,
+                        url: request.url,
+                        method: request.method,
+                    });
+                    throw err;
+                }
             },
         },
     },
