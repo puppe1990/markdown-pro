@@ -1,20 +1,22 @@
 import { betterAuth } from 'better-auth';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
-import { LibsqlDialect } from '@libsql/kysely-libsql';
 import {
     resolveAuthBaseUrl,
     resolveDatabaseConfig,
 } from '@/src/db/resolveDbUrl';
+import { LibsqlClientDialect } from '@/src/db/libsql-client-dialect';
+import { createClient } from '@libsql/client';
 
 function createAuthDatabase() {
     const config = resolveDatabaseConfig();
+    const client = createClient(
+        config.authToken
+            ? { url: config.url, authToken: config.authToken }
+            : { url: config.url },
+    );
 
     return {
-        dialect: new LibsqlDialect(
-            config.authToken
-                ? { url: config.url, authToken: config.authToken }
-                : { url: config.url },
-        ),
+        dialect: new LibsqlClientDialect({ client }),
         type: 'sqlite' as const,
     };
 }
