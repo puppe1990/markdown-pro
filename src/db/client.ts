@@ -1,4 +1,5 @@
-import { createClient, type Client } from '@libsql/client';
+import type { Client } from '@libsql/client';
+import { createLibsqlClient } from './createLibsqlClient';
 import { migrateAppSchema } from './migrate';
 import { resolveDatabaseConfig } from './resolveDbUrl';
 
@@ -7,11 +8,7 @@ let initPromise: Promise<Client> | null = null;
 
 async function initializeDb(): Promise<Client> {
     const config = resolveDatabaseConfig();
-    const db = createClient(
-        config.authToken
-            ? { url: config.url, authToken: config.authToken }
-            : { url: config.url },
-    );
+    const db = await createLibsqlClient(config);
     await migrateAppSchema(db);
     dbInstance = db;
     return db;

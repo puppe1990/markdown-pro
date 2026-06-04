@@ -20,7 +20,8 @@ export interface Tab {
 async function requireAuth() {
     const request = getRequest();
     if (!request) throw new Error('No request available in server context');
-    const { auth } = await import('@/src/features/auth/auth');
+    const { getAuth } = await import('@/src/features/auth/auth');
+    const auth = await getAuth();
     return auth.api.getSession({ headers: request.headers });
 }
 

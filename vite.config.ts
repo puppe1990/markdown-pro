@@ -9,6 +9,13 @@ export default defineConfig({
         port: 3000,
         host: '0.0.0.0',
     },
+    resolve: {
+        // Netlify functions must use the HTTP-only libSQL client (no native bindings).
+        conditions: ['netlify', 'import', 'module', 'browser', 'default'],
+    },
+    ssr: {
+        external: ['libsql', '@libsql/linux-x64-gnu'],
+    },
     plugins: [
         tsConfigPaths(),
         tanstackStart({
