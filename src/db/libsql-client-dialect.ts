@@ -10,11 +10,7 @@ import {
     SqliteIntrospector,
     SqliteQueryCompiler,
 } from 'kysely';
-import {
-    openHttp,
-    type HttpClient,
-    type HttpStream,
-} from '@libsql/hrana-client';
+import { openHttp, type HttpStream } from '@libsql/hrana-client';
 
 export interface LibsqlHranaDialectConfig {
     url: string;
@@ -46,7 +42,7 @@ export class LibsqlHranaDialect implements Dialect {
 }
 
 class LibsqlHranaDriver implements Driver {
-    private client: HttpClient;
+    private client: ReturnType<typeof openHttp>;
 
     constructor(config: LibsqlHranaDialectConfig) {
         this.client = openHttp(new URL(config.url), config.authToken);
@@ -88,10 +84,9 @@ class LibsqlHranaConnection implements DatabaseConnection {
     }
 
     async executeQuery<R>(query: CompiledQuery): Promise<QueryResult<R>> {
-        const result = await this.stream.run({
-            sql: query.sql,
-            args: query.parameters as unknown[],
-        });
+        const args = query.parameters as unknown[];
+        const stmt = args.length > 0 ? [query.sql, args] : query.sql;
+        const result = await this.stream.run(stmt);
 
         return {
             insertId:
@@ -105,13 +100,10 @@ class LibsqlHranaConnection implements DatabaseConnection {
 
     async *streamQuery<R>(
         query: CompiledQuery,
-        chunkSize: number,
     ): AsyncIterableIterator<QueryResult<R>> {
-        void chunkSize;
-        const rowsResult = await this.stream.query({
-            sql: query.sql,
-            args: query.parameters as unknown[],
-        });
+        const args = query.parameters as unknown[];
+        const stmt = args.length > 0 ? [query.sql, args] : query.sql;
+        const rowsResult = await this.stream.query(stmt);
 
         yield {
             insertId: undefined,

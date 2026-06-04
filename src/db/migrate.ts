@@ -12,6 +12,6 @@ export async function migrateAppSchema(db: HttpStream): Promise<void> {
         .filter((statement) => statement.length > 0);
 
     for (const statement of statements) {
-        await db.run({ sql: statement, args: [] });
+        await db.run(statement);
     }
 }
