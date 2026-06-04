@@ -6,10 +6,20 @@ export interface DatabaseConfig {
     authToken?: string;
 }
 
-const defaultLocalDbPath = path.resolve(
-    process.cwd(),
-    'data/markdown-pro.sqlite',
-);
+function isServerlessRuntime(): boolean {
+    return (
+        process.env.NETLIFY === 'true' ||
+        process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined
+    );
+}
+
+function defaultLocalDbPath(): string {
+    if (isServerlessRuntime()) {
+        return '/tmp/markdown-pro.sqlite';
+    }
+
+    return path.resolve(process.cwd(), 'data/markdown-pro.sqlite');
+}
 
 export function resolveLocalDbPath(): string {
     const config = resolveDatabaseConfig();
@@ -34,6 +44,19 @@ export function resolveDatabaseConfig(): DatabaseConfig {
             : { url: `file:${databaseUrl}` };
     }
 
-    fs.mkdirSync(path.dirname(defaultLocalDbPath), { recursive: true });
-    return { url: `file:${defaultLocalDbPath}` };
+    const localDbPath = defaultLocalDbPath();
+    if (!isServerlessRuntime()) {
+        fs.mkdirSync(path.dirname(localDbPath), { recursive: true });
+    }
+
+    return { url: `file:${localDbPath}` };
+}
+
+export function resolveAuthBaseUrl(): string {
+    return (
+        process.env.BETTER_AUTH_URL ??
+        process.env.DEPLOY_PRIME_URL ??
+        process.env.URL ??
+        'http://localhost:3000'
+    );
 }

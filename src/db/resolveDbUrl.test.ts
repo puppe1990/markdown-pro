@@ -37,9 +37,22 @@ describe('resolveDatabaseConfig', () => {
         delete process.env.TURSO_DATABASE_URL;
         delete process.env.TURSO_AUTH_TOKEN;
         delete process.env.DATABASE_URL;
+        delete process.env.NETLIFY;
+        delete process.env.AWS_LAMBDA_FUNCTION_NAME;
 
         const config = resolveDatabaseConfig();
         expect(config.url).toMatch(/^file:/);
         expect(config.authToken).toBeUndefined();
+    });
+
+    it('uses /tmp sqlite path on Netlify serverless runtime', () => {
+        delete process.env.TURSO_DATABASE_URL;
+        delete process.env.TURSO_AUTH_TOKEN;
+        delete process.env.DATABASE_URL;
+        process.env.NETLIFY = 'true';
+
+        expect(resolveDatabaseConfig()).toEqual({
+            url: 'file:/tmp/markdown-pro.sqlite',
+        });
     });
 });
