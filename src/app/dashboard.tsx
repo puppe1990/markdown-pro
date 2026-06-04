@@ -12,6 +12,9 @@ import { usePreferences } from '@/src/features/preferences/usePreferences';
 import { useSetTheme } from '@/src/features/preferences/usePreferences';
 import { Version } from '@/types';
 import { useLocalStorageMigration } from '@/src/hooks/useLocalStorageMigration';
+import { useDebouncedSync } from '@/hooks/useDebouncedSync';
+import { useUpdateTab } from '@/src/features/tabs/useTabs';
+import { useSaveVersion } from '@/src/features/versions/useVersions';
 
 export const Route = createFileRoute('/dashboard')({
     component: DashboardPage,
@@ -51,21 +54,43 @@ function DashboardPage() {
         closeTab,
         renameTab,
         updateTabContent,
+        updateTabContentLocal,
     } = useTabManager();
+
+    const updateTabMut = useUpdateTab();
+    const saveVersionMut = useSaveVersion();
 
     const markdown = activeTab?.content ?? '';
     const activeTabName = activeTab?.name ?? 'Untitled';
 
-    const { versions, saveVersion } = useVersionHistory((content) => {
-        updateTabContent(activeTabId, content);
-    }, activeTabId);
+    const { versions, saveVersion, addLocalVersion } = useVersionHistory(
+        (content) => {
+            updateTabContent(activeTabId, content);
+        },
+        activeTabId,
+    );
+
+    const syncToServer = useCallback(
+        async (id: string, content: string) => {
+            await updateTabMut.mutateAsync({ data: { id, content } });
+            saveVersionMut.mutate({ data: { tabId: id, content } });
+        },
+        [updateTabMut, saveVersionMut],
+    );
+
+    const { syncStatus, syncNow } = useDebouncedSync(
+        activeTabId,
+        markdown,
+        syncToServer,
+        10000,
+    );
 
     const handleSetMarkdown = useCallback(
         (newContent: string) => {
-            updateTabContent(activeTabId, newContent);
-            saveVersion(newContent);
+            updateTabContentLocal(activeTabId, newContent);
+            addLocalVersion(newContent);
         },
-        [activeTabId, updateTabContent, saveVersion],
+        [activeTabId, updateTabContentLocal, addLocalVersion],
     );
 
     useLocalStorageMigration();
@@ -131,6 +156,8 @@ function DashboardPage() {
                 }}
                 userEmail={session?.user?.email}
                 onSignOut={() => signOut()}
+                syncStatus={syncStatus}
+                onSyncClick={() => syncNow()}
             />
             <TabBar
                 tabs={tabs}

@@ -5,6 +5,7 @@ import {
     useUpdateTab,
     useDeleteTab,
 } from '@/src/features/tabs/useTabs';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface Tab {
     id: string;
@@ -21,6 +22,7 @@ const newId = () => {
 const defaultTab = (): Tab => ({ id: newId(), name: 'Untitled', content: '' });
 
 export function useTabManager() {
+    const qc = useQueryClient();
     const { data: remoteTabs, isLoading } = useTabs();
     const createTabMut = useCreateTab();
     const updateTabMut = useUpdateTab();
@@ -131,6 +133,18 @@ export function useTabManager() {
         [updateTabMut, remoteTabs],
     );
 
+    const updateTabContentLocal = useCallback(
+        (id: string, content: string) => {
+            qc.setQueryData<Tab[]>(['tabs'], (old) =>
+                old?.map((t) => (t.id === id ? { ...t, content } : t)),
+            );
+            setLocalTabs((prev) =>
+                prev.map((t) => (t.id === id ? { ...t, content } : t)),
+            );
+        },
+        [qc],
+    );
+
     return {
         tabs,
         activeTabId,
@@ -141,5 +155,6 @@ export function useTabManager() {
         closeTab,
         renameTab,
         updateTabContent,
+        updateTabContentLocal,
     };
 }

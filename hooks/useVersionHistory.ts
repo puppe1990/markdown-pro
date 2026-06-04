@@ -55,6 +55,16 @@ export function useVersionHistory(
         [activeTabId, saveVersionMut],
     );
 
+    const addLocalVersion = useCallback((content: string) => {
+        setLocalVersions((prev) => {
+            const latest = prev[0];
+            if (latest && latest.content === content) return prev;
+
+            const newVersion: Version = { content, timestamp: Date.now() };
+            return [newVersion, ...prev].slice(0, 50);
+        });
+    }, []);
+
     const revertToVersion = useCallback(
         (versionIndex: number) => {
             const versionToRevert = versions[versionIndex];
@@ -65,5 +75,5 @@ export function useVersionHistory(
         [versions, setMarkdown],
     );
 
-    return { versions, saveVersion, revertToVersion };
+    return { versions, saveVersion, addLocalVersion, revertToVersion };
 }
