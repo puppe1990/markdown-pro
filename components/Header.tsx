@@ -12,12 +12,15 @@ import {
     FileImage,
     BookOpenIcon,
     UserIcon,
+    SaveIcon,
+    SpinnerIcon,
 } from './icons';
 import {
     exportAsMarkdown,
     exportAsPdf,
     exportAsDocx,
 } from '../services/exportService';
+import { SyncStatus } from '../hooks/useDebouncedSync';
 
 interface HeaderProps {
     theme: 'light' | 'dark';
@@ -30,6 +33,8 @@ interface HeaderProps {
     tabName?: string;
     userEmail?: string | null;
     onSignOut?: () => void;
+    syncStatus?: SyncStatus;
+    onSyncClick?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -43,6 +48,8 @@ const Header: React.FC<HeaderProps> = ({
     tabName,
     userEmail,
     onSignOut,
+    syncStatus,
+    onSyncClick,
 }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -188,6 +195,35 @@ const Header: React.FC<HeaderProps> = ({
                         <CopyIcon className="w-5 h-5" />
                     )}
                 </button>
+                {syncStatus && (
+                    <button
+                        onClick={onSyncClick}
+                        className={`p-2.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${
+                            syncStatus === 'saved'
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                : syncStatus === 'error'
+                                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300'
+                                  : 'hover:bg-gray-100/80 dark:hover:bg-gray-700/80 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+                        }`}
+                        title={
+                            syncStatus === 'saved'
+                                ? 'All changes saved'
+                                : syncStatus === 'saving'
+                                  ? 'Saving...'
+                                  : syncStatus === 'error'
+                                    ? 'Sync failed - click to retry'
+                                    : 'Save changes'
+                        }
+                    >
+                        {syncStatus === 'saved' ? (
+                            <CheckIcon className="w-5 h-5" />
+                        ) : syncStatus === 'saving' ? (
+                            <SpinnerIcon className="w-5 h-5" />
+                        ) : (
+                            <SaveIcon className="w-5 h-5" />
+                        )}
+                    </button>
+                )}
                 <button
                     onClick={onHistoryClick}
                     className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"

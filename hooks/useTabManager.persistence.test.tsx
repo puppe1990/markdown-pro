@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Tab } from '@/src/features/tabs/tabs.functions';
 
 const mockCreateTab = vi.fn();
@@ -19,6 +20,15 @@ vi.mock('@/src/features/tabs/useTabs', () => ({
 }));
 
 import { useTabManager } from './useTabManager';
+
+function createWrapper() {
+    const qc = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+    });
+    return ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    );
+}
 
 describe('useTabManager persistence', () => {
     beforeEach(() => {
@@ -41,7 +51,9 @@ describe('useTabManager persistence', () => {
             isLoading: false,
         };
 
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
 
         expect(result.current.tabs).toEqual([
             { id: 'server-tab-1', name: 'Notes', content: '# Saved markdown' },
@@ -62,7 +74,9 @@ describe('useTabManager persistence', () => {
         );
         remoteTabsState = { data: [], isLoading: false };
 
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
 
         expect(result.current.tabs).toEqual([]);
         expect(
@@ -75,7 +89,7 @@ describe('useTabManager persistence', () => {
     it('creates a default tab on the server when the user has no tabs', async () => {
         remoteTabsState = { data: [], isLoading: false };
 
-        renderHook(() => useTabManager());
+        renderHook(() => useTabManager(), { wrapper: createWrapper() });
 
         await waitFor(() => {
             expect(mockCreateTab).toHaveBeenCalledWith({
@@ -90,7 +104,9 @@ describe('useTabManager persistence', () => {
             isLoading: false,
         };
 
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
 
         act(() => {
             result.current.updateTabContent('server-tab-1', '# Hello again');

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTabManager } from './useTabManager';
 
 vi.mock('@/src/features/tabs/useTabs', () => ({
@@ -8,6 +9,15 @@ vi.mock('@/src/features/tabs/useTabs', () => ({
     useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
     useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
 }));
+
+function createWrapper() {
+    const qc = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+    });
+    return ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    );
+}
 
 describe('useTabManager', () => {
     beforeEach(() => {
@@ -28,7 +38,9 @@ describe('useTabManager', () => {
             ]),
         );
 
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
 
         expect(result.current.tabs).toHaveLength(2);
         expect(result.current.tabs[0]).toEqual({
@@ -53,14 +65,18 @@ describe('useTabManager', () => {
         );
         localStorage.setItem('markdown-active-tab-id', 'saved-2');
 
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
 
         expect(result.current.activeTabId).toBe('saved-2');
         expect(result.current.activeTab.id).toBe('saved-2');
     });
 
     it('starts with one default tab', () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
         expect(result.current.tabs).toHaveLength(1);
         expect(result.current.tabs[0].name).toBe('Untitled');
         expect(result.current.tabs[0].content).toBe('');
@@ -68,7 +84,9 @@ describe('useTabManager', () => {
     });
 
     it('adds a new tab', () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
         act(() => {
             result.current.updateTabContent(
                 result.current.activeTabId,
@@ -93,7 +111,9 @@ describe('useTabManager', () => {
         );
 
         const freshUseTabManager = await loadFreshUseTabManager();
-        const { result } = renderHook(() => freshUseTabManager());
+        const { result } = renderHook(() => freshUseTabManager(), {
+            wrapper: createWrapper(),
+        });
 
         act(() => {
             result.current.addTab();
@@ -104,7 +124,9 @@ describe('useTabManager', () => {
     });
 
     it('switches active tab', () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
         act(() => {
             result.current.addTab();
         });
@@ -116,7 +138,9 @@ describe('useTabManager', () => {
     });
 
     it('renames a tab', () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
         const id = result.current.tabs[0].id;
         act(() => {
             result.current.renameTab(id, 'My Notes');
@@ -125,7 +149,9 @@ describe('useTabManager', () => {
     });
 
     it('updates content of active tab', () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
         const id = result.current.tabs[0].id;
         act(() => {
             result.current.updateTabContent(id, '# Hello');
@@ -134,7 +160,9 @@ describe('useTabManager', () => {
     });
 
     it('closes a tab and switches to next available', () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
         act(() => {
             result.current.addTab();
         });
@@ -151,7 +179,9 @@ describe('useTabManager', () => {
     });
 
     it('cannot close last tab', () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
         const id = result.current.tabs[0].id;
         act(() => {
             result.current.closeTab(id);
@@ -166,7 +196,9 @@ describe('useTabManager', () => {
         );
 
         const freshUseTabManager = await loadFreshUseTabManager();
-        const { result } = renderHook(() => freshUseTabManager());
+        const { result } = renderHook(() => freshUseTabManager(), {
+            wrapper: createWrapper(),
+        });
 
         act(() => {
             result.current.addTab();
@@ -184,7 +216,9 @@ describe('useTabManager', () => {
     });
 
     it('active tab content reflects current tab', () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
         act(() => {
             result.current.addTab();
         });
@@ -199,7 +233,9 @@ describe('useTabManager', () => {
     });
 
     it('keeps the last tab active when selecting it after creating multiple tabs', () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
 
         act(() => {
             result.current.updateTabContent(
@@ -246,7 +282,9 @@ describe('useTabManager', () => {
     });
 
     it('restores the first tab when active tab id becomes invalid', async () => {
-        const { result } = renderHook(() => useTabManager());
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: createWrapper(),
+        });
 
         act(() => {
             result.current.setActiveTabId('missing-tab');
