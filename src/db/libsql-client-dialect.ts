@@ -10,12 +10,21 @@ import {
     SqliteIntrospector,
     SqliteQueryCompiler,
 } from 'kysely';
-import { type Client } from '@libsql/client';
+import {
+    openHttp,
+    type HttpClient,
+    type HttpStream,
+} from '@libsql/hrana-client';
 
-export class LibsqlClientDialect implements Dialect {
-    private config: LibsqlClientDialectConfig;
+export interface LibsqlHranaDialectConfig {
+    url: string;
+    authToken?: string;
+}
 
-    constructor(config: LibsqlClientDialectConfig) {
+export class LibsqlHranaDialect implements Dialect {
+    private config: LibsqlHranaDialectConfig;
+
+    constructor(config: LibsqlHranaDialectConfig) {
         this.config = config;
     }
 
@@ -24,7 +33,7 @@ export class LibsqlClientDialect implements Dialect {
     }
 
     createDriver(): Driver {
-        return new LibsqlClientDriver(this.config.client);
+        return new LibsqlHranaDriver(this.config);
     }
 
     createIntrospector(db: unknown): unknown {
@@ -36,21 +45,18 @@ export class LibsqlClientDialect implements Dialect {
     }
 }
 
-interface LibsqlClientDialectConfig {
-    client: Client;
-}
+class LibsqlHranaDriver implements Driver {
+    private client: HttpClient;
 
-class LibsqlClientDriver implements Driver {
-    private client: Client;
-
-    constructor(client: Client) {
-        this.client = client;
+    constructor(config: LibsqlHranaDialectConfig) {
+        this.client = openHttp(new URL(config.url), config.authToken);
     }
 
     async init(): Promise<void> {}
 
     async acquireConnection(): Promise<DatabaseConnection> {
-        return new LibsqlClientConnection(this.client);
+        const stream = this.client.openStream();
+        return new LibsqlHranaConnection(stream);
     }
 
     async beginTransaction(conn: DatabaseConnection): Promise<void> {
@@ -66,31 +72,34 @@ class LibsqlClientDriver implements Driver {
     }
 
     async releaseConnection(conn: DatabaseConnection): Promise<void> {
-        void conn;
+        (conn as LibsqlHranaConnection).close();
     }
 
-    async destroy(): Promise<void> {}
+    async destroy(): Promise<void> {
+        this.client.close();
+    }
 }
 
-class LibsqlClientConnection implements DatabaseConnection {
-    private client: Client;
+class LibsqlHranaConnection implements DatabaseConnection {
+    private stream: HttpStream;
 
-    constructor(client: Client) {
-        this.client = client;
+    constructor(stream: HttpStream) {
+        this.stream = stream;
     }
 
     async executeQuery<R>(query: CompiledQuery): Promise<QueryResult<R>> {
-        const result = await this.client.execute({
+        const result = await this.stream.run({
             sql: query.sql,
             args: query.parameters as unknown[],
         });
 
         return {
-            insertId: result.lastInsertRowid
-                ? BigInt(result.lastInsertRowid)
-                : undefined,
-            numAffectedRows: BigInt(result.rowsAffected),
-            rows: result.rows as R[],
+            insertId:
+                result.lastInsertRowid !== undefined
+                    ? BigInt(result.lastInsertRowid)
+                    : undefined,
+            numAffectedRows: BigInt(result.affectedRowCount),
+            rows: [] as R[],
         };
     }
 
@@ -99,7 +108,19 @@ class LibsqlClientConnection implements DatabaseConnection {
         chunkSize: number,
     ): AsyncIterableIterator<QueryResult<R>> {
         void chunkSize;
-        const result = await this.executeQuery<R>(query);
-        yield result;
+        const rowsResult = await this.stream.query({
+            sql: query.sql,
+            args: query.parameters as unknown[],
+        });
+
+        yield {
+            insertId: undefined,
+            numAffectedRows: BigInt(rowsResult.rows.length),
+            rows: rowsResult.rows as R[],
+        };
+    }
+
+    close(): void {
+        this.stream.close();
     }
 }

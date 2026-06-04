@@ -4,19 +4,16 @@ import {
     resolveAuthBaseUrl,
     resolveDatabaseConfig,
 } from '@/src/db/resolveDbUrl';
-import { LibsqlClientDialect } from '@/src/db/libsql-client-dialect';
-import { createClient } from '@libsql/client';
+import { LibsqlHranaDialect } from '@/src/db/libsql-client-dialect';
 
 function createAuthDatabase() {
     const config = resolveDatabaseConfig();
-    const client = createClient(
-        config.authToken
-            ? { url: config.url, authToken: config.authToken }
-            : { url: config.url },
-    );
 
     return {
-        dialect: new LibsqlClientDialect({ client }),
+        dialect: new LibsqlHranaDialect({
+            url: config.url,
+            authToken: config.authToken,
+        }),
         type: 'sqlite' as const,
     };
 }
