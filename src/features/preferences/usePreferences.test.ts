@@ -1,28 +1,25 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
 import { useSetTheme } from './usePreferences';
+import { createQueryWrapper } from '@/src/test/create-query-wrapper';
 
 vi.mock('./preferences.functions', () => ({
     getPreferences: vi.fn().mockResolvedValue({ theme: 'light' }),
     setTheme: vi.fn().mockResolvedValue({ theme: 'dark' }),
 }));
 
-function createWrapper() {
-    const qc = new QueryClient({
-        defaultOptions: { queries: { retry: false } },
-    });
-    return {
-        qc,
-        Wrapper: ({ children }: { children: React.ReactNode }) =>
-            React.createElement(QueryClientProvider, { client: qc }, children),
-    };
+import * as prefsFunctions from './preferences.functions';
+
+class FakePreferencesFunctions {
+    getPreferences = prefsFunctions.getPreferences;
+    setTheme = prefsFunctions.setTheme;
 }
+
+const fakePrefs = new FakePreferencesFunctions();
 
 describe('useSetTheme', () => {
     it('optimistically updates cache with correct theme value', async () => {
-        const { qc, Wrapper } = createWrapper();
+        const { qc, Wrapper } = createQueryWrapper();
         qc.setQueryData(['preferences'], { theme: 'light' });
 
         const { result } = renderHook(() => useSetTheme(), {
@@ -38,10 +35,9 @@ describe('useSetTheme', () => {
     });
 
     it('rolls back cache on error', async () => {
-        const { setTheme } = await import('./preferences.functions');
-        vi.mocked(setTheme).mockRejectedValueOnce(new Error('network'));
+        fakePrefs.setTheme.mockRejectedValueOnce(new Error('network'));
 
-        const { qc, Wrapper } = createWrapper();
+        const { qc, Wrapper } = createQueryWrapper();
         qc.setQueryData(['preferences'], { theme: 'light' });
 
         const { result } = renderHook(() => useSetTheme(), {

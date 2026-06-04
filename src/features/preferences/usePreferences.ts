@@ -1,10 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
     getPreferences,
     setTheme,
     type Preferences,
 } from './preferences.functions';
+import { useOptimisticMutation } from '@/src/lib/use-optimistic-mutation';
 
+type SetThemeVariables = {
+    data: { theme: 'light' | 'dark' };
+};
+
+/**
+ * Fetches user preferences (theme etc).
+ */
 export function usePreferences() {
     return useQuery({
         queryKey: ['preferences'],
@@ -12,21 +20,17 @@ export function usePreferences() {
     });
 }
 
+/**
+ * Mutation to set the UI theme. Optimistically updates the preferences cache
+ * immediately, with rollback on error and invalidate on settle.
+ *
+ * Example:
+ *   const setTheme = useSetTheme();
+ *   setTheme.mutate({ data: { theme: 'dark' } });
+ */
 export function useSetTheme() {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: setTheme,
-        onMutate: async (input) => {
-            await qc.cancelQueries({ queryKey: ['preferences'] });
-            const previous = qc.getQueryData<Preferences>(['preferences']);
-            qc.setQueryData<Preferences>(['preferences'], {
-                theme: input.data.theme,
-            });
-            return { previous };
-        },
-        onError: (_err, _input, context) => {
-            qc.setQueryData(['preferences'], context?.previous);
-        },
-        onSettled: () => qc.invalidateQueries({ queryKey: ['preferences'] }),
+    return useOptimisticMutation<SetThemeVariables, Preferences>(setTheme, {
+        queryKey: ['preferences'],
+        updater: (_old, input) => ({ theme: input.data.theme }),
     });
 }
