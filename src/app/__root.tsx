@@ -1,11 +1,15 @@
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import {
     createRootRoute,
     HeadContent,
+    Link,
     Outlet,
     Scripts,
 } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PWA_THEME_COLOR } from '@/src/pwa/manifest';
+import { registerPwa } from '@/src/pwa/registerPwa';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -22,9 +26,39 @@ export const Route = createRootRoute({
                 content: 'width=device-width, initial-scale=1.0',
             },
             { title: 'Markdown Pro' },
+            {
+                name: 'description',
+                content:
+                    'Markdown editor with real-time preview, tabs, version history, and export.',
+            },
+            { name: 'theme-color', content: PWA_THEME_COLOR },
+            { name: 'mobile-web-app-capable', content: 'yes' },
+            { name: 'apple-mobile-web-app-capable', content: 'yes' },
+            {
+                name: 'apple-mobile-web-app-status-bar-style',
+                content: 'default',
+            },
+            { name: 'apple-mobile-web-app-title', content: 'Markdown Pro' },
         ],
         links: [
-            { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+            {
+                rel: 'icon',
+                type: 'image/png',
+                sizes: '32x32',
+                href: '/favicon-32x32.png',
+            },
+            {
+                rel: 'icon',
+                type: 'image/png',
+                sizes: '16x16',
+                href: '/favicon-16x16.png',
+            },
+            {
+                rel: 'apple-touch-icon',
+                sizes: '180x180',
+                href: '/apple-touch-icon.png',
+            },
+            { rel: 'manifest', href: '/manifest.webmanifest' },
             {
                 rel: 'stylesheet',
                 href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
@@ -32,9 +66,39 @@ export const Route = createRootRoute({
         ],
     }),
     component: RootComponent,
+    notFoundComponent: NotFoundPage,
 });
 
+function NotFoundPage() {
+    return (
+        <main className="min-h-screen flex items-center justify-center px-4 bg-white dark:bg-gray-900">
+            <div className="text-center space-y-4">
+                <p className="text-sm font-medium uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                    404
+                </p>
+                <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
+                    Page not found
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 max-w-md">
+                    The page you are looking for does not exist or may have been
+                    moved.
+                </p>
+                <Link
+                    to="/"
+                    className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-blue-700 hover:to-indigo-700"
+                >
+                    Back to home
+                </Link>
+            </div>
+        </main>
+    );
+}
+
 function RootComponent() {
+    useEffect(() => {
+        registerPwa();
+    }, []);
+
     return (
         <RootDocument>
             <QueryClientProvider client={queryClient}>

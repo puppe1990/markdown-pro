@@ -20,7 +20,7 @@ export function useSetTheme() {
             await qc.cancelQueries({ queryKey: ['preferences'] });
             const previous = qc.getQueryData<Preferences>(['preferences']);
             qc.setQueryData<Preferences>(['preferences'], {
-                theme: input.theme,
+                theme: input.data.theme,
             });
             return { previous };
         },

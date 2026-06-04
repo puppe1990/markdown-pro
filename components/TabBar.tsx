@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Tab } from '../hooks/useTabManager';
+import ConfirmModal from './ConfirmModal';
 
 interface Props {
     tabs: Tab[];
@@ -20,6 +21,7 @@ const TabBar: React.FC<Props> = ({
 }) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editValue, setEditValue] = useState('');
+    const [pendingCloseId, setPendingCloseId] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -42,16 +44,22 @@ const TabBar: React.FC<Props> = ({
     };
 
     const handleClose = (tab: Tab) => {
-        if (
-            tab.content.trim() &&
-            !window.confirm(
-                'This tab has content. Are you sure you want to close it?',
-            )
-        ) {
+        if (tab.content.trim()) {
+            setPendingCloseId(tab.id);
             return;
         }
-
         onClose(tab.id);
+    };
+
+    const confirmClose = () => {
+        if (pendingCloseId) {
+            onClose(pendingCloseId);
+            setPendingCloseId(null);
+        }
+    };
+
+    const cancelClose = () => {
+        setPendingCloseId(null);
     };
 
     return (
@@ -113,6 +121,13 @@ const TabBar: React.FC<Props> = ({
             >
                 +
             </button>
+            <ConfirmModal
+                isOpen={pendingCloseId !== null}
+                title="Close tab?"
+                message="This tab has content. Are you sure you want to close it?"
+                onConfirm={confirmClose}
+                onCancel={cancelClose}
+            />
         </div>
     );
 };
