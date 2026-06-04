@@ -25,6 +25,7 @@ export default defineConfig({
         tanstackStart({
             router: {
                 routesDirectory: 'app',
+                routeFileIgnorePattern: '\\.test\\.',
             },
         }),
         netlify(),
