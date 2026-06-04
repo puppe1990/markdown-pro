@@ -18,7 +18,19 @@ export function useCreateTab() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: createTab,
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['tabs'] }),
+        onMutate: async (input) => {
+            await qc.cancelQueries({ queryKey: ['tabs'] });
+            const previous = qc.getQueryData<Tab[]>(['tabs']);
+            qc.setQueryData<Tab[]>(['tabs'], (old) => [
+                ...(old ?? []),
+                { id: input.data.id, name: input.data.name, content: '' },
+            ]);
+            return { previous };
+        },
+        onError: (_err, _input, context) => {
+            qc.setQueryData(['tabs'], context?.previous);
+        },
+        onSettled: () => qc.invalidateQueries({ queryKey: ['tabs'] }),
     });
 }
 
