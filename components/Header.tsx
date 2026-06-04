@@ -11,6 +11,7 @@ import {
     FileIcon,
     FileImage,
     BookOpenIcon,
+    UserIcon,
 } from './icons';
 import {
     exportAsMarkdown,
@@ -27,6 +28,8 @@ interface HeaderProps {
     markdownContent: string;
     onImportMarkdown: (content: string) => void;
     tabName?: string;
+    userEmail?: string | null;
+    onSignOut?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -38,10 +41,14 @@ const Header: React.FC<HeaderProps> = ({
     markdownContent,
     onImportMarkdown,
     tabName,
+    userEmail,
+    onSignOut,
 }) => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
+    const userMenuRef = useRef<HTMLDivElement>(null);
     const importInputRef = useRef<HTMLInputElement>(null);
 
     const handleExport = (format: 'md' | 'pdf' | 'docx') => {
@@ -130,6 +137,12 @@ const Header: React.FC<HeaderProps> = ({
             ) {
                 setIsExportMenuOpen(false);
             }
+            if (
+                userMenuRef.current &&
+                !userMenuRef.current.contains(event.target as Node)
+            ) {
+                setIsUserMenuOpen(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () =>
@@ -204,6 +217,38 @@ const Header: React.FC<HeaderProps> = ({
                         <SunIcon className="w-5 h-5" />
                     )}
                 </button>
+                {userEmail && (
+                    <div className="relative" ref={userMenuRef}>
+                        <button
+                            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                            className="p-2.5 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200 hover:scale-105 active:scale-95 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                            title="User Menu"
+                        >
+                            <UserIcon className="w-5 h-5" />
+                        </button>
+                        {isUserMenuOpen && (
+                            <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-2 z-50 border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700/50 mb-1">
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium">
+                                        Signed in as
+                                    </p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-200 truncate mt-0.5">
+                                        {userEmail}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setIsUserMenuOpen(false);
+                                        onSignOut?.();
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors duration-150 font-medium"
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
                 <div className="relative" ref={exportMenuRef}>
                     <button
                         onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
