@@ -28,6 +28,7 @@ export function useTabManager() {
     const updateTabMut = useUpdateTab();
     const deleteTabMut = useDeleteTab();
     const ensuredDefaultTab = useRef(false);
+    const addingTabRef = useRef<string | null>(null);
 
     const [localTabs, setLocalTabs] = useState<Tab[]>(() => {
         if (typeof window === 'undefined') return [defaultTab()];
@@ -65,15 +66,29 @@ export function useTabManager() {
             return;
         }
 
-        setActiveTabIdState((prev) =>
-            remoteTabs.some((t) => t.id === prev) ? prev : remoteTabs[0].id,
-        );
+        if (
+            addingTabRef.current &&
+            remoteTabs.some((t) => t.id === addingTabRef.current)
+        ) {
+            addingTabRef.current = null;
+        }
+
+        setActiveTabIdState((prev) => {
+            if (addingTabRef.current === prev) {
+                return prev;
+            }
+            addingTabRef.current = null;
+            return remoteTabs.some((t) => t.id === prev)
+                ? prev
+                : remoteTabs[0].id;
+        });
     }, [remoteTabs, isLoading, createTabMut]);
 
     const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
     const setActiveTabId = useCallback(
         (id: string) => {
+            addingTabRef.current = null;
             setActiveTabIdState(
                 tabs.some((t) => t.id === id) ? id : (tabs[0]?.id ?? ''),
             );
@@ -85,6 +100,7 @@ export function useTabManager() {
         const id = newId();
         const name =
             tabs.length === 0 ? 'Untitled' : `Untitled ${tabs.length + 1}`;
+        addingTabRef.current = id;
         if (remoteTabs === undefined) {
             const newTab: Tab = { id, name, content: '' };
             setLocalTabs((prev) => [...prev, newTab]);
@@ -100,6 +116,9 @@ export function useTabManager() {
                 setLocalTabs((prev) => prev.filter((t) => t.id !== id));
             }
             deleteTabMut.mutate({ data: { id } });
+            if (addingTabRef.current === id) {
+                addingTabRef.current = null;
+            }
             setActiveTabIdState((prevActive) => {
                 if (prevActive !== id) return prevActive;
                 const remaining = tabs.filter((t) => t.id !== id);

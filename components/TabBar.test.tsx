@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import TabBar from './TabBar';
 import { Tab } from '../hooks/useTabManager';
 
@@ -8,6 +9,40 @@ const tabs: Tab[] = [
     { id: '1', name: 'Notes', content: '# Hello' },
     { id: '2', name: 'Draft', content: '# Draft' },
 ];
+
+function StatefulTabBar() {
+    const [state, setState] = useState({
+        tabs: [
+            { id: '1', name: 'Notes', content: '# Hello' },
+            { id: '2', name: 'Draft', content: '# Draft' },
+        ] as Tab[],
+        activeTabId: '1',
+    });
+
+    const handleAdd = () => {
+        const newId = 'new-tab';
+        setState((prev) => ({
+            tabs: [
+                ...prev.tabs,
+                { id: newId, name: 'Untitled 3', content: '' },
+            ],
+            activeTabId: newId,
+        }));
+    };
+
+    return (
+        <TabBar
+            tabs={state.tabs}
+            activeTabId={state.activeTabId}
+            onSelect={(id) =>
+                setState((prev) => ({ ...prev, activeTabId: id }))
+            }
+            onAdd={handleAdd}
+            onClose={vi.fn()}
+            onRename={vi.fn()}
+        />
+    );
+}
 
 describe('TabBar', () => {
     it('renders all tab names', () => {
@@ -191,5 +226,13 @@ describe('TabBar', () => {
         await userEvent.clear(input);
         await userEvent.type(input, 'Renamed{Enter}');
         expect(onRename).toHaveBeenCalledWith('1', 'Renamed');
+    });
+
+    it('focuses the new tab button after clicking +', async () => {
+        render(<StatefulTabBar />);
+        await userEvent.click(screen.getByRole('button', { name: /add tab/i }));
+
+        const newTab = screen.getByText('Untitled 3');
+        expect(newTab.closest('[role="tab"]')).toHaveFocus();
     });
 });

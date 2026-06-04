@@ -296,4 +296,26 @@ describe('useTabManager', () => {
 
         expect(result.current.activeTab).toBe(result.current.tabs[0]);
     });
+
+    it('keeps new tab active after addTab when remoteTabs data is loaded', async () => {
+        const remoteTabs = [{ id: 'srv-1', name: 'Saved', content: '# Note' }];
+
+        vi.doMock('@/src/features/tabs/useTabs', () => ({
+            useTabs: () => ({ data: remoteTabs, isLoading: false }),
+            useCreateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+            useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+            useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+        }));
+
+        const freshUseTabManager = await loadFreshUseTabManager();
+        const { result } = renderHook(() => freshUseTabManager(), {
+            wrapper: createWrapper(),
+        });
+
+        act(() => {
+            result.current.addTab();
+        });
+
+        expect(result.current.activeTabId).not.toBe('srv-1');
+    });
 });

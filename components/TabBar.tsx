@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Tab } from '../hooks/useTabManager';
 import ConfirmModal from './ConfirmModal';
 
@@ -23,6 +23,8 @@ const TabBar: React.FC<Props> = ({
     const [editValue, setEditValue] = useState('');
     const [pendingCloseId, setPendingCloseId] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const tabRefs = useRef<Map<string, HTMLElement>>(new Map());
+    const prevTabsLength = useRef(tabs.length);
 
     useEffect(() => {
         if (editingId && inputRef.current) {
@@ -30,6 +32,28 @@ const TabBar: React.FC<Props> = ({
             inputRef.current.select();
         }
     }, [editingId]);
+
+    useEffect(() => {
+        if (tabs.length > prevTabsLength.current) {
+            const newestTab = tabs[tabs.length - 1];
+            if (newestTab && newestTab.id === activeTabId) {
+                const el = tabRefs.current.get(newestTab.id);
+                el?.focus();
+            }
+        }
+        prevTabsLength.current = tabs.length;
+    }, [tabs.length, activeTabId, tabs]);
+
+    const setTabRef = useCallback(
+        (id: string) => (el: HTMLDivElement | null) => {
+            if (el) {
+                tabRefs.current.set(id, el);
+            } else {
+                tabRefs.current.delete(id);
+            }
+        },
+        [],
+    );
 
     const startEdit = (tab: Tab) => {
         setEditingId(tab.id);
@@ -67,8 +91,21 @@ const TabBar: React.FC<Props> = ({
             {tabs.map((tab) => (
                 <div
                     key={tab.id}
+                    ref={setTabRef(tab.id)}
+                    role="tab"
+                    tabIndex={0}
+                    aria-selected={tab.id === activeTabId}
                     onClick={() => onSelect(tab.id)}
-                    className={`group flex items-center gap-1 px-3 py-2 text-sm cursor-pointer select-none shrink-0 border-r border-gray-200/60 dark:border-gray-700/60 transition-colors ${
+                    onKeyDown={(e) => {
+                        if (
+                            e.target === e.currentTarget &&
+                            (e.key === 'Enter' || e.key === ' ')
+                        ) {
+                            e.preventDefault();
+                            onSelect(tab.id);
+                        }
+                    }}
+                    className={`group flex items-center gap-1 px-3 py-2 text-sm cursor-pointer select-none shrink-0 border-r border-gray-200/60 dark:border-gray-700/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset ${
                         tab.id === activeTabId
                             ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 text-blue-600 dark:text-blue-400 border-b-2 border-b-blue-500'
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'

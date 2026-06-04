@@ -46,6 +46,12 @@ describe('Editor', () => {
         });
     });
 
+    it('autofocuses the textarea on mount', () => {
+        render(<Editor value="" onChange={() => {}} />);
+        const textarea = screen.getByRole('textbox');
+        expect(textarea).toHaveFocus();
+    });
+
     it('handles drag over state', () => {
         render(<Editor value="" onChange={() => {}} />);
         const textarea = screen.getByRole('textbox');
