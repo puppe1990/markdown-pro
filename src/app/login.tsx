@@ -45,6 +45,7 @@ function LoginPage() {
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -58,14 +59,21 @@ function LoginPage() {
             return;
         }
 
-        const result = await signIn.email({ email, password });
-        if (result.error) {
+        setLoading(true);
+        try {
+            const result = await signIn.email({ email, password });
+            if (result.error) {
+                setError(getAuthErrorMessage(result.error));
+                return;
+            }
+            navigate({ to: '/dashboard' });
+        } catch {
             setError(
-                getAuthErrorMessage(result.error.code, result.error.message),
+                "We couldn't reach the server. Please check your internet connection and try again.",
             );
-            return;
+        } finally {
+            setLoading(false);
         }
-        navigate({ to: '/dashboard' });
     };
 
     return (
@@ -128,9 +136,10 @@ function LoginPage() {
                     </div>
                     <button
                         type="submit"
-                        className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all"
+                        disabled={loading}
+                        className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                        Sign In
+                        {loading ? 'Signing in...' : 'Sign In'}
                     </button>
                 </form>
                 <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
