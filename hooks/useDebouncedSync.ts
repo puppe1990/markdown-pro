@@ -43,23 +43,21 @@ export function useDebouncedSync(
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tabs));
     }, []);
 
-    const performSync = useCallback(async () => {
-        const tabId = activeTabIdRef.current;
-        const currentContent = contentRef.current;
-
-        if (!currentContent) return;
-
-        syncInProgressRef.current = true;
-        setSyncStatus('saving');
-        try {
-            await onSyncRef.current(tabId, currentContent);
-            setSyncStatus('saved');
-        } catch {
-            setSyncStatus('error');
-        } finally {
-            syncInProgressRef.current = false;
-        }
-    }, []);
+    const performSync = useCallback(
+        async (tabId: string, syncContent: string) => {
+            syncInProgressRef.current = true;
+            setSyncStatus('saving');
+            try {
+                await onSyncRef.current(tabId, syncContent);
+                setSyncStatus('saved');
+            } catch {
+                setSyncStatus('error');
+            } finally {
+                syncInProgressRef.current = false;
+            }
+        },
+        [],
+    );
 
     useEffect(() => {
         const localTimer = setTimeout(() => {
@@ -75,20 +73,45 @@ export function useDebouncedSync(
     useEffect(() => {
         if (syncStatus !== 'pending') return;
 
+        const syncingTabId = activeTabId;
+
         const syncTimer = setTimeout(() => {
-            performSync();
+            const tabs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const tab = tabs.find((t: { id: string }) => t.id === syncingTabId);
+            if (!tab) return;
+            performSync(syncingTabId, tab.content);
         }, delay);
 
         return () => {
             clearTimeout(syncTimer);
         };
-    }, [content, delay, syncStatus, performSync]);
+    }, [content, delay, syncStatus, performSync, activeTabId]);
+
+    const prevActiveTabRef = useRef(activeTabId);
+
+    useEffect(() => {
+        const prevTabId = prevActiveTabRef.current;
+        prevActiveTabRef.current = activeTabId;
+
+        if (prevTabId === activeTabId) return;
+
+        const tabs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        const tab = tabs.find((t: { id: string }) => t.id === prevTabId);
+        if (tab) {
+            onSyncRef.current(prevTabId, tab.content);
+        }
+    }, [activeTabId]);
 
     const syncNow = useCallback(async () => {
         if (syncInProgressRef.current) return;
 
+        const tabId = activeTabIdRef.current;
         saveToLocalStorage(contentRef.current);
-        await performSync();
+
+        const tabs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        const tab = tabs.find((t: { id: string }) => t.id === tabId);
+        if (!tab) return;
+        await performSync(tabId, tab.content);
     }, [saveToLocalStorage, performSync]);
 
     return { syncStatus, syncNow };

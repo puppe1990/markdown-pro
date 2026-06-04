@@ -205,8 +205,13 @@ describe('useDebouncedSync', () => {
         });
     });
 
-    it('does not sync when content is empty (no changes)', () => {
+    it('syncs empty content when user clears a document', () => {
         const onSync = vi.fn().mockResolvedValue(undefined);
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify([{ id: 'tab-1', name: 'Notes', content: '# Old' }]),
+        );
 
         renderHook(
             ({ content }) => useDebouncedSync('tab-1', content, onSync, 10000),
@@ -221,7 +226,42 @@ describe('useDebouncedSync', () => {
             vi.advanceTimersByTime(10000);
         });
 
-        expect(onSync).not.toHaveBeenCalled();
+        expect(onSync).toHaveBeenCalledWith('tab-1', '');
+    });
+
+    it('syncs the originally edited tab when user switches tabs before debounce timer fires', () => {
+        const onSync = vi.fn().mockResolvedValue(undefined);
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify([
+                { id: 'tab-a', name: 'Tab A', content: '# Tab A old' },
+                { id: 'tab-b', name: 'Tab B', content: '# Tab B old' },
+            ]),
+        );
+
+        const { rerender } = renderHook(
+            ({ tabId, content }) =>
+                useDebouncedSync(tabId, content, onSync, 10000),
+            { initialProps: { tabId: 'tab-a', content: '# Tab A edited' } },
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(150);
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(5000);
+        });
+
+        rerender({ tabId: 'tab-b', content: '# Tab B old' });
+
+        act(() => {
+            vi.advanceTimersByTime(10150);
+        });
+
+        expect(onSync).toHaveBeenCalledWith('tab-a', '# Tab A edited');
+        expect(onSync).toHaveBeenCalledTimes(2);
     });
 
     it('prevents concurrent syncs when syncNow is called multiple times', async () => {
