@@ -3,10 +3,15 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useSetTheme } from './usePreferences';
 import { createQueryWrapper } from '@/src/test/create-query-wrapper';
 
-vi.mock('./preferences.functions', () => ({
-    getPreferences: vi.fn().mockResolvedValue({ theme: 'light' }),
-    setTheme: vi.fn().mockResolvedValue({ theme: 'dark' }),
-}));
+vi.mock('./preferences.functions', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('./preferences.functions')>();
+    return {
+        ...actual,
+        getPreferences: vi.fn().mockResolvedValue({ theme: 'light' }),
+        setTheme: vi.fn().mockResolvedValue({ theme: 'dark' }),
+    };
+});
 
 import * as prefsFunctions from './preferences.functions';
 

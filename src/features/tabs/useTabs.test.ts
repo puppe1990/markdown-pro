@@ -3,11 +3,15 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useCreateTab, useTabs } from './useTabs';
 import { createQueryWrapper } from '@/src/test/create-query-wrapper';
 
-vi.mock('./tabs.functions', () => ({
-    createTab: vi
-        .fn()
-        .mockResolvedValue({ id: 'new-tab', name: 'Test', content: '' }),
-}));
+vi.mock('./tabs.functions', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./tabs.functions')>();
+    return {
+        ...actual,
+        createTab: vi
+            .fn()
+            .mockResolvedValue({ id: 'new-tab', name: 'Test', content: '' }),
+    };
+});
 
 import * as tabsFunctions from './tabs.functions';
 
