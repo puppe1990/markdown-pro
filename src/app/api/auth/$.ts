@@ -1,11 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { auth } from '@/src/features/auth/auth';
+import { getDbReady } from '@/src/db/client';
 
 export const Route = createFileRoute('/api/auth/$')({
     server: {
         handlers: {
-            GET: ({ request }) => auth.handler(request),
-            POST: ({ request }) => auth.handler(request),
+            GET: async ({ request }) => {
+                await getDbReady();
+                return auth.handler(request);
+            },
+            POST: async ({ request }) => {
+                await getDbReady();
+                return auth.handler(request);
+            },
         },
     },
 });

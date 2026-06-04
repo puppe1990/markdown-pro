@@ -113,17 +113,6 @@ function DashboardPage() {
 
     return (
         <div className="flex flex-col h-screen font-sans antialiased bg-gray-50 dark:bg-gray-950">
-            <div className="flex items-center justify-between px-6 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200/60 dark:border-gray-700/60">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {session?.user?.email}
-                </span>
-                <button
-                    onClick={() => signOut()}
-                    className="text-sm px-3 py-1 bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-950/50 transition-colors"
-                >
-                    Sign Out
-                </button>
-            </div>
             <Header
                 theme={theme}
                 toggleTheme={toggleTheme}
@@ -136,6 +125,8 @@ function DashboardPage() {
                     updateTabContent(activeTabId, content);
                     saveVersion(content);
                 }}
+                userEmail={session?.user?.email}
+                onSignOut={() => signOut()}
             />
             <TabBar
                 tabs={tabs}
