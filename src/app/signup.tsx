@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
-import { signUp } from '@/src/features/auth/auth-client';
+import { useState, useEffect } from 'react';
+import { signUp, useSession } from '@/src/features/auth/auth-client';
 import { getAuthErrorMessage } from '@/src/features/auth/auth-errors';
 import { EyeIcon, EyeOffIcon } from '@/components/icons';
 
@@ -46,7 +46,7 @@ function inputClass(hasError: boolean) {
     return `${inputBase} ${hasError ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'}`;
 }
 
-function SignupPage() {
+export function SignupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
@@ -55,6 +55,7 @@ function SignupPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { data: session } = useSession();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -72,17 +73,25 @@ function SignupPage() {
             const result = await signUp.email({ email, password, name });
             if (result.error) {
                 setError(getAuthErrorMessage(result.error));
+                setLoading(false);
                 return;
             }
-            navigate({ to: '/dashboard' });
+            // Success: do NOT navigate immediately (same race as login after logout/signout).
+            // Wait for useSession to reflect the new session via the effect below.
         } catch {
             setError(
                 "We couldn't reach the server. Please check your internet connection and try again.",
             );
-        } finally {
             setLoading(false);
         }
+        // On success keep loading until effect navigates (unmounts).
     };
+
+    useEffect(() => {
+        if (session) {
+            navigate({ to: '/dashboard' });
+        }
+    }, [session, navigate]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-950 dark:via-indigo-950 dark:to-purple-950">

@@ -32,3 +32,6 @@ data/
 
 # Local Netlify folder
 .netlify
+
+# Grok Build / agent tool local state (do not commit)
+.grok/
