@@ -4,6 +4,3 @@
 
 [build.environment]
   NODE_VERSION = "22"
-
-[context.deploy-preview.environment]
-  BETTER_AUTH_SECRET = "deploy-preview-dev-secret-32chars-minimum"
