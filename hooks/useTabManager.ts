@@ -1,4 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import {
+    useTabs,
+    useCreateTab,
+    useUpdateTab,
+    useDeleteTab,
+} from '@/src/features/tabs/useTabs';
 
 export interface Tab {
     id: string;
@@ -7,163 +13,129 @@ export interface Tab {
 }
 
 let counter = 0;
-const newId = () => `tab-${++counter}`;
+const newId = () => {
+    const id = `tab-${Date.now()}-${++counter}`;
+    return id;
+};
 
 const defaultTab = (): Tab => ({ id: newId(), name: 'Untitled', content: '' });
-const TABS_STORAGE_KEY = 'markdown-tabs';
-const ACTIVE_TAB_STORAGE_KEY = 'markdown-active-tab-id';
-const LEGACY_TABS_STORAGE_KEY = 'markdown-content';
-
-const readCounterFromId = (id: string) => {
-    const match = /^tab-(\d+)$/.exec(id);
-    return match ? Number(match[1]) : 0;
-};
-
-const syncCounterWithTabs = (tabs: Tab[]) => {
-    const highestStoredId = tabs.reduce((highestId, tab) => {
-        return Math.max(highestId, readCounterFromId(tab.id));
-    }, 0);
-
-    counter = Math.max(counter, highestStoredId);
-};
-
-const isTab = (value: unknown): value is Tab => {
-    if (typeof value !== 'object' || value === null) return false;
-
-    const candidate = value as Partial<Tab>;
-
-    return (
-        typeof candidate.id === 'string' &&
-        typeof candidate.name === 'string' &&
-        typeof candidate.content === 'string'
-    );
-};
-
-const readStoredTabs = (): Tab[] => {
-    const storedTabs =
-        localStorage.getItem(TABS_STORAGE_KEY) ??
-        localStorage.getItem(LEGACY_TABS_STORAGE_KEY);
-
-    if (!storedTabs) return [defaultTab()];
-
-    try {
-        const parsed = JSON.parse(storedTabs);
-        if (Array.isArray(parsed)) {
-            const tabs = parsed.filter(isTab);
-            if (tabs.length > 0) {
-                syncCounterWithTabs(tabs);
-                return tabs;
-            }
-        }
-    } catch {
-        // Ignore corrupted persisted state and fall back to a new tab.
-    }
-
-    return [defaultTab()];
-};
-
-const readStoredActiveTabId = (tabs: Tab[]) => {
-    const storedActiveTabId = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY);
-
-    if (storedActiveTabId && tabs.some((tab) => tab.id === storedActiveTabId)) {
-        return storedActiveTabId;
-    }
-
-    return tabs[0]?.id ?? '';
-};
-
-interface TabState {
-    tabs: Tab[];
-    activeTabId: string;
-}
 
 export function useTabManager() {
-    const [tabState, setTabState] = useState<TabState>(() => {
-        const tabs = readStoredTabs();
-        return {
-            tabs,
-            activeTabId: readStoredActiveTabId(tabs),
-        };
+    const { data: remoteTabs, isLoading } = useTabs();
+    const createTabMut = useCreateTab();
+    const updateTabMut = useUpdateTab();
+    const deleteTabMut = useDeleteTab();
+    const ensuredDefaultTab = useRef(false);
+
+    const [localTabs, setLocalTabs] = useState<Tab[]>(() => {
+        if (typeof window === 'undefined') return [defaultTab()];
+        try {
+            const stored = localStorage.getItem('markdown-tabs');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length > 0)
+                    return parsed as Tab[];
+            }
+        } catch {
+            /* ignore */
+        }
+        return [defaultTab()];
     });
-    const { tabs, activeTabId } = tabState;
+
+    const [activeTabId, setActiveTabIdState] = useState(() => {
+        if (typeof window === 'undefined') return localTabs[0]?.id ?? '';
+        const stored = localStorage.getItem('markdown-active-tab-id');
+        return stored || (localTabs[0]?.id ?? '');
+    });
+
+    const tabs = remoteTabs === undefined ? localTabs : remoteTabs;
+
+    useEffect(() => {
+        if (isLoading || remoteTabs === undefined) return;
+
+        if (remoteTabs.length === 0) {
+            if (!ensuredDefaultTab.current) {
+                ensuredDefaultTab.current = true;
+                const id = newId();
+                createTabMut.mutate({ data: { id, name: 'Untitled' } });
+                setActiveTabIdState(id);
+            }
+            return;
+        }
+
+        setActiveTabIdState((prev) =>
+            remoteTabs.some((t) => t.id === prev) ? prev : remoteTabs[0].id,
+        );
+    }, [remoteTabs, isLoading, createTabMut]);
 
     const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
-    useEffect(() => {
-        localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify(tabs));
-    }, [tabs]);
-
-    useEffect(() => {
-        if (activeTabId) {
-            localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, activeTabId);
-        }
-    }, [activeTabId]);
+    const setActiveTabId = useCallback(
+        (id: string) => {
+            setActiveTabIdState(
+                tabs.some((t) => t.id === id) ? id : (tabs[0]?.id ?? ''),
+            );
+        },
+        [tabs],
+    );
 
     const addTab = useCallback(() => {
         const id = newId();
+        const name =
+            tabs.length === 0 ? 'Untitled' : `Untitled ${tabs.length + 1}`;
+        if (remoteTabs === undefined) {
+            const newTab: Tab = { id, name, content: '' };
+            setLocalTabs((prev) => [...prev, newTab]);
+        }
+        setActiveTabIdState(id);
+        createTabMut.mutate({ data: { id, name } });
+    }, [tabs.length, createTabMut, remoteTabs]);
 
-        setTabState((prev) => {
-            const count = prev.tabs.length + 1;
-            const name = count === 1 ? 'Untitled' : `Untitled ${count}`;
-            return {
-                tabs: [...prev.tabs, { id, name, content: '' }],
-                activeTabId: id,
-            };
-        });
-    }, []);
+    const closeTab = useCallback(
+        (id: string) => {
+            if (tabs.length === 1) return;
+            if (remoteTabs === undefined) {
+                setLocalTabs((prev) => prev.filter((t) => t.id !== id));
+            }
+            deleteTabMut.mutate({ data: { id } });
+            setActiveTabIdState((prevActive) => {
+                if (prevActive !== id) return prevActive;
+                const remaining = tabs.filter((t) => t.id !== id);
+                return remaining[0]?.id ?? '';
+            });
+        },
+        [tabs, deleteTabMut, remoteTabs],
+    );
 
-    const closeTab = useCallback((id: string) => {
-        setTabState((prev) => {
-            if (prev.tabs.length === 1) return prev;
-            const idx = prev.tabs.findIndex((tab) => tab.id === id);
-            if (idx === -1) return prev;
+    const renameTab = useCallback(
+        (id: string, name: string) => {
+            if (remoteTabs === undefined) {
+                setLocalTabs((prev) =>
+                    prev.map((t) => (t.id === id ? { ...t, name } : t)),
+                );
+            }
+            updateTabMut.mutate({ data: { id, name } });
+        },
+        [updateTabMut, remoteTabs],
+    );
 
-            const nextTabs = prev.tabs.filter((tab) => tab.id !== id);
-            const nextActiveTabId =
-                prev.activeTabId === id
-                    ? (nextTabs[Math.max(0, idx - 1)]?.id ??
-                      nextTabs[0]?.id ??
-                      '')
-                    : prev.activeTabId;
-
-            return {
-                tabs: nextTabs,
-                activeTabId: nextActiveTabId,
-            };
-        });
-    }, []);
-
-    const setActiveTabId = useCallback((id: string) => {
-        setTabState((prev) => ({
-            ...prev,
-            activeTabId: prev.tabs.some((tab) => tab.id === id)
-                ? id
-                : (prev.tabs[0]?.id ?? ''),
-        }));
-    }, []);
-
-    const renameTab = useCallback((id: string, name: string) => {
-        setTabState((prev) => ({
-            ...prev,
-            tabs: prev.tabs.map((tab) =>
-                tab.id === id ? { ...tab, name } : tab,
-            ),
-        }));
-    }, []);
-
-    const updateTabContent = useCallback((id: string, content: string) => {
-        setTabState((prev) => ({
-            ...prev,
-            tabs: prev.tabs.map((tab) =>
-                tab.id === id ? { ...tab, content } : tab,
-            ),
-        }));
-    }, []);
+    const updateTabContent = useCallback(
+        (id: string, content: string) => {
+            if (remoteTabs === undefined) {
+                setLocalTabs((prev) =>
+                    prev.map((t) => (t.id === id ? { ...t, content } : t)),
+                );
+            }
+            updateTabMut.mutate({ data: { id, content } });
+        },
+        [updateTabMut, remoteTabs],
+    );
 
     return {
         tabs,
         activeTabId,
         activeTab,
+        isLoading,
         setActiveTabId,
         addTab,
         closeTab,

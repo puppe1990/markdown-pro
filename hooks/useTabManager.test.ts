@@ -2,6 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useTabManager } from './useTabManager';
 
+vi.mock('@/src/features/tabs/useTabs', () => ({
+    useTabs: () => ({ data: undefined, isLoading: false }),
+    useCreateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+    useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+    useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+}));
+
 describe('useTabManager', () => {
     beforeEach(() => {
         localStorage.clear();
@@ -92,7 +99,8 @@ describe('useTabManager', () => {
             result.current.addTab();
         });
 
-        expect(result.current.tabs[1].id).toBe('tab-2');
+        expect(result.current.tabs[1].id).toMatch(/^tab-/);
+        expect(result.current.tabs[1].id).not.toBe('tab-1');
     });
 
     it('switches active tab', () => {
@@ -164,13 +172,15 @@ describe('useTabManager', () => {
             result.current.addTab();
         });
 
+        const newTabId = result.current.tabs[1].id;
+
         act(() => {
             result.current.closeTab('tab-1');
         });
 
         expect(result.current.tabs).toHaveLength(1);
-        expect(result.current.tabs[0].id).toBe('tab-2');
-        expect(result.current.activeTabId).toBe('tab-2');
+        expect(result.current.tabs[0].id).toBe(newTabId);
+        expect(result.current.activeTabId).toBe(newTabId);
     });
 
     it('active tab content reflects current tab', () => {

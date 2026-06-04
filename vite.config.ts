@@ -1,29 +1,22 @@
-import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import netlify from '@netlify/vite-plugin-tanstack-start';
+import viteReact from '@vitejs/plugin-react';
+import tsConfigPaths from 'vite-tsconfig-paths';
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    return {
-        server: {
-            port: 3000,
-            host: '0.0.0.0',
-        },
-        plugins: [react()],
-        define: {
-            'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-            'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        },
-        resolve: {
-            alias: {
-                '@': path.resolve(__dirname, '.'),
+export default defineConfig({
+    server: {
+        port: 3000,
+        host: '0.0.0.0',
+    },
+    plugins: [
+        tsConfigPaths(),
+        tanstackStart({
+            router: {
+                routesDirectory: 'app',
             },
-        },
-        test: {
-            globals: true,
-            environment: 'jsdom',
-            setupFiles: ['./src/test/setup.ts'],
-            include: ['**/*.test.{ts,tsx}'],
-        },
-    };
+        }),
+        netlify(),
+        viteReact(),
+    ],
 });

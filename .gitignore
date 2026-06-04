@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .playwright-mcp/
+.worktrees/
+.env
+.timestamp_*
+.tanstack/
+data/
+
+# Local Netlify folder
+.netlify
