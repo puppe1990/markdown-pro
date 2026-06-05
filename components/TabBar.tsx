@@ -128,7 +128,7 @@ const TabBar: React.FC<Props> = ({
                                 if (e.key === 'Escape') setEditingId(null);
                             }}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-28 bg-transparent border-b border-accent outline-none text-sm text-ink"
+                            className="w-28 bg-transparent border-b border-accent outline-none text-sm text-ink dark:text-stone-100"
                         />
                     ) : (
                         <span

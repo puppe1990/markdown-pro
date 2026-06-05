@@ -269,7 +269,7 @@ const Header: React.FC<HeaderProps> = ({
                                     <p className="text-xs text-ink-faint uppercase tracking-wide font-medium">
                                         Signed in as
                                     </p>
-                                    <p className="text-sm text-ink truncate mt-0.5">
+                                    <p className="text-sm text-ink dark:text-stone-200 truncate mt-0.5">
                                         {userEmail}
                                     </p>
                                 </div>
