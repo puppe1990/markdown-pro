@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
         },
         test: {
             include: ['scripts/prepare-local-db.test.ts'],
+            pool: 'forks',
             env,
         },
     };

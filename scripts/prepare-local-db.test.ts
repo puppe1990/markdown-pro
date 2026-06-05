@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { getDbReady } from '@/src/db/client';
+import { createClient } from '@libsql/client';
+import { prepareLocalDatabase } from '@/src/db/client';
 import {
     resolveDatabaseConfig,
     resolveLocalDbPath,
@@ -15,11 +16,17 @@ describe('prepare local SQLite database', () => {
         const dbPath = resolveLocalDbPath();
         expect(path.isAbsolute(dbPath)).toBe(true);
 
-        const db = await getDbReady();
-        const columns = await db.execute('PRAGMA table_info(preferences)');
-        const names = columns.rows.map((row) =>
-            String((row as { name: string }).name),
-        );
-        expect(names).toContain('accent_color');
+        await prepareLocalDatabase();
+
+        const db = createClient({ url: config.url });
+        try {
+            const columns = await db.execute('PRAGMA table_info(preferences)');
+            const names = columns.rows.map((row) =>
+                String((row as { name: string }).name),
+            );
+            expect(names).toContain('accent_color');
+        } finally {
+            db.close();
+        }
     });
 });
