@@ -9,6 +9,7 @@ import {
     ImageIcon,
 } from './icons';
 import { addImage } from '../services/imageService';
+import { borderSubtle, btnIcon, surfaceBar } from '@/src/lib/ui-classes';
 
 interface ToolbarProps {
     textareaRef: React.RefObject<HTMLTextAreaElement>;
@@ -165,7 +166,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ textareaRef, setMarkdown }) => {
     ] as const;
 
     return (
-        <div className="flex items-center px-4 py-3 border-b border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm space-x-1.5">
+        <div
+            className={`flex items-center px-3 py-2 border-b ${borderSubtle} ${surfaceBar} gap-0.5`}
+        >
             {buttons.map((btn) => (
                 <button
                     key={btn.title}
@@ -176,12 +179,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ textareaRef, setMarkdown }) => {
                             imageInputRef.current?.click();
                         }
                     }}
-                    className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all duration-200 hover:scale-105 active:scale-95 group"
+                    className={btnIcon}
                     title={btn.title}
                 >
-                    <span className="group-hover:scale-110 transition-transform duration-200 inline-block">
-                        {btn.icon}
-                    </span>
+                    {btn.icon}
                 </button>
             ))}
             <input

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSession, signOut } from '@/src/features/auth/auth-client';
 import Header from '@/components/Header';
 import Editor from '@/components/Editor';
@@ -15,6 +15,14 @@ import { useLocalStorageMigration } from '@/src/hooks/useLocalStorageMigration';
 import { useDebouncedSync } from '@/hooks/useDebouncedSync';
 import { useUpdateTab } from '@/src/features/tabs/useTabs';
 import { useSaveVersion } from '@/src/features/versions/useVersions';
+import {
+    appShell,
+    borderSubtle,
+    surfaceBar,
+    tabActive,
+    tabInactive,
+} from '@/src/lib/ui-classes';
+import { useAppTheme } from '@/src/features/preferences/useAppTheme';
 
 export const Route = createFileRoute('/dashboard')({
     component: DashboardPage,
@@ -26,17 +34,9 @@ function DashboardPage() {
     const { data: prefs } = usePreferences();
     const { mutate: setThemeMutate } = useSetTheme();
 
-    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('theme') as
-                | 'light'
-                | 'dark'
-                | null;
-            if (saved) return saved;
-            if (window.matchMedia?.('(prefers-color-scheme: dark)').matches)
-                return 'dark';
-        }
-        return 'light';
+    const { resolved: theme, toggleTheme } = useAppTheme({
+        preference: prefs?.theme ?? 'system',
+        onPreferenceChange: (next) => setThemeMutate({ data: { theme: next } }),
     });
 
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
@@ -96,33 +96,11 @@ function DashboardPage() {
     useLocalStorageMigration();
 
     useEffect(() => {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }, [theme]);
-
-    useEffect(() => {
-        if (prefs?.theme && prefs.theme !== theme) {
-            setTheme(prefs.theme);
-        }
-    }, [prefs?.theme, theme, setTheme]);
-
-    useEffect(() => {
         if (isPending) return;
         if (!session) {
             navigate({ to: '/login' });
         }
     }, [session, isPending, navigate]);
-
-    const toggleTheme = useCallback(() => {
-        setTheme((prev) => {
-            const next = prev === 'light' ? 'dark' : 'light';
-            setThemeMutate({ data: { theme: next } });
-            return next;
-        });
-    }, [setThemeMutate]);
 
     const handleRevert = useCallback(
         (version: Version) => {
@@ -134,14 +112,14 @@ function DashboardPage() {
 
     if (isPending) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+            <div className="flex items-center justify-center min-h-screen bg-paper dark:bg-ink-950">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-ink-border border-t-accent" />
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-screen font-sans antialiased bg-gray-50 dark:bg-gray-950">
+        <div className={appShell}>
             <Header
                 theme={theme}
                 toggleTheme={toggleTheme}
@@ -167,24 +145,22 @@ function DashboardPage() {
                 onClose={closeTab}
                 onRename={renameTab}
             />
-            <main className="flex-grow flex flex-col md:flex-row overflow-hidden">
-                <div className="md:hidden flex border-b border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+            <main className="flex-grow flex flex-col md:flex-row overflow-hidden workspace-grid">
+                <div
+                    className={`md:hidden flex border-b ${borderSubtle} ${surfaceBar}`}
+                >
                     <button
                         onClick={() => setActiveView('editor')}
-                        className={`flex-1 p-4 text-sm font-semibold transition-all duration-200 ${
-                            activeView === 'editor'
-                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                                : 'bg-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        className={`flex-1 p-4 text-sm font-semibold transition-colors ${
+                            activeView === 'editor' ? tabActive : tabInactive
                         }`}
                     >
                         Write
                     </button>
                     <button
                         onClick={() => setActiveView('preview')}
-                        className={`flex-1 p-4 text-sm font-semibold transition-all duration-200 ${
-                            activeView === 'preview'
-                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                                : 'bg-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        className={`flex-1 p-4 text-sm font-semibold transition-colors ${
+                            activeView === 'preview' ? tabActive : tabInactive
                         }`}
                     >
                         Preview
@@ -200,7 +176,7 @@ function DashboardPage() {
                     />
                 </div>
                 <div
-                    className={`w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'} md:block ${isReadingMode ? '!w-full !block' : 'md:w-1/2'} border-l border-gray-200/60 dark:border-gray-700/60`}
+                    className={`w-full h-full ${activeView === 'preview' ? 'block' : 'hidden'} md:block ${isReadingMode ? '!w-full !block' : 'md:w-1/2'} border-l ${borderSubtle}`}
                 >
                     <Preview markdown={markdown} />
                 </div>

@@ -1,8 +1,9 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getRequest } from '@tanstack/react-start/server';
+import { parseThemePreference, type ThemePreference } from './theme';
 
 export interface Preferences {
-    theme: 'light' | 'dark';
+    theme: ThemePreference;
 }
 
 async function requireAuth() {
@@ -25,14 +26,11 @@ export const getPreferences = createServerFn({ method: 'GET' }).handler(
         });
 
         if (result.rows.length === 0) {
-            return { theme: 'light' };
+            return { theme: 'system' };
         }
 
-        return {
-            theme: (result.rows[0] as { theme: string }).theme as
-                | 'light'
-                | 'dark',
-        };
+        const stored = (result.rows[0] as { theme: string }).theme;
+        return { theme: parseThemePreference(stored) };
     },
 );
 
@@ -41,10 +39,10 @@ export const setTheme = createServerFn({ method: 'POST' })
         if (typeof data !== 'object' || data === null)
             throw new Error('Invalid input');
         const theme = String((data as Record<string, unknown>).theme);
-        if (theme !== 'light' && theme !== 'dark') {
-            throw new Error('theme must be "light" or "dark"');
+        if (theme !== 'light' && theme !== 'dark' && theme !== 'system') {
+            throw new Error('theme must be "light", "dark", or "system"');
         }
-        return { theme: theme as 'light' | 'dark' };
+        return { theme: theme as ThemePreference };
     })
     .handler(async ({ data }): Promise<Preferences> => {
         const session = await requireAuth();

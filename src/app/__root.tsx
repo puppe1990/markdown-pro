@@ -8,6 +8,12 @@ import {
     Scripts,
 } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+    FONT_STYLESHEET,
+    GLOBAL_CSS,
+    TAILWIND_CONFIG_SCRIPT,
+} from '@/src/lib/global-styles';
+import { btnPrimary } from '@/src/lib/ui-classes';
 import { PWA_THEME_COLOR } from '@/src/pwa/manifest';
 import { registerPwa } from '@/src/pwa/registerPwa';
 
@@ -59,10 +65,7 @@ export const Route = createRootRoute({
                 href: '/apple-touch-icon.png',
             },
             { rel: 'manifest', href: '/manifest.webmanifest' },
-            {
-                rel: 'stylesheet',
-                href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-            },
+            { rel: 'stylesheet', href: FONT_STYLESHEET },
         ],
     }),
     component: RootComponent,
@@ -71,22 +74,19 @@ export const Route = createRootRoute({
 
 function NotFoundPage() {
     return (
-        <main className="min-h-screen flex items-center justify-center px-4 bg-white dark:bg-gray-900">
-            <div className="text-center space-y-4">
-                <p className="text-sm font-medium uppercase tracking-wide text-blue-600 dark:text-blue-400">
+        <main className="min-h-screen flex items-center justify-center px-4 bg-paper dark:bg-ink-950 auth-glow">
+            <div className="text-center space-y-5">
+                <p className="text-sm font-semibold uppercase tracking-widest text-accent">
                     404
                 </p>
-                <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
+                <h1 className="text-3xl font-bold tracking-tight text-ink dark:text-stone-100">
                     Page not found
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 max-w-md">
+                <p className="text-ink-muted max-w-md leading-relaxed">
                     The page you are looking for does not exist or may have been
                     moved.
                 </p>
-                <Link
-                    to="/"
-                    className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition hover:from-blue-700 hover:to-indigo-700"
-                >
+                <Link to="/" className={btnPrimary}>
                     Back to home
                 </Link>
             </div>
@@ -116,62 +116,12 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 <script src="https://cdn.tailwindcss.com?plugins=typography" />
                 <script
                     dangerouslySetInnerHTML={{
-                        __html: `
-                            tailwind.config = {
-                                darkMode: 'class',
-                                theme: {
-                                    extend: {
-                                        animation: {
-                                            in: 'in 0.2s ease-out',
-                                            'fade-in': 'fade-in 0.2s ease-out',
-                                            'slide-in-from-right': 'slide-in-from-right 0.3s ease-out',
-                                            'slide-in-from-top-2': 'slide-in-from-top-2 0.2s ease-out',
-                                        },
-                                        keyframes: {
-                                            in: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                                            'fade-in': { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                                            'slide-in-from-right': {
-                                                '0%': { transform: 'translateX(100%)' },
-                                                '100%': { transform: 'translateX(0)' },
-                                            },
-                                            'slide-in-from-top-2': {
-                                                '0%': { transform: 'translateY(-8px)', opacity: '0' },
-                                                '100%': { transform: 'translateY(0)', opacity: '1' },
-                                            },
-                                        },
-                                    },
-                                },
-                            };
-                        `,
+                        __html: TAILWIND_CONFIG_SCRIPT,
                     }}
                 />
-                <style
-                    dangerouslySetInnerHTML={{
-                        __html: `
-                            body {
-                                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                            }
-                            * { scroll-behavior: smooth; }
-                            ::-webkit-scrollbar { width: 8px; height: 8px; }
-                            ::-webkit-scrollbar-track { background: transparent; }
-                            ::-webkit-scrollbar-thumb {
-                                background: rgba(156, 163, 175, 0.5);
-                                border-radius: 4px;
-                            }
-                            ::-webkit-scrollbar-thumb:hover {
-                                background: rgba(156, 163, 175, 0.7);
-                            }
-                            .dark ::-webkit-scrollbar-thumb {
-                                background: rgba(75, 85, 99, 0.5);
-                            }
-                            .dark ::-webkit-scrollbar-thumb:hover {
-                                background: rgba(75, 85, 99, 0.7);
-                            }
-                        `,
-                    }}
-                />
+                <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
             </head>
-            <body className="bg-white dark:bg-gray-900">
+            <body className="bg-paper dark:bg-ink-950 text-ink dark:text-stone-100">
                 {children}
                 <Scripts />
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" />
