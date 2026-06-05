@@ -1,17 +1,13 @@
 import { betterAuth } from 'better-auth';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
-import { createLibsqlClient } from '@/src/db/createLibsqlClient';
-import {
-    resolveAuthBaseUrl,
-    resolveDatabaseConfig,
-} from '@/src/db/resolveDbUrl';
+import { getDbReady } from '@/src/db/client';
+import { resolveAuthBaseUrl } from '@/src/db/resolveDbUrl';
 import { LibsqlKyselyDialect } from '@/src/features/auth/libsql-kysely-dialect';
 
 const authBaseUrl = resolveAuthBaseUrl();
 
 async function createAuthDatabase() {
-    const config = resolveDatabaseConfig();
-    const client = await createLibsqlClient(config);
+    const client = await getDbReady();
 
     return {
         dialect: new LibsqlKyselyDialect(client, true),

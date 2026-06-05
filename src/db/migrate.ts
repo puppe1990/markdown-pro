@@ -71,6 +71,16 @@ async function migratePreferencesThemeSystem(db: Client): Promise<void> {
     });
 }
 
+/** Runs incremental migrations (safe to call on every DB access). */
+export async function runPendingMigrations(db: Client): Promise<void> {
+    if (isRemoteDatabase(resolveDatabaseConfig())) {
+        return;
+    }
+
+    await migratePreferencesThemeSystem(db);
+    await migratePreferencesAccentColor(db);
+}
+
 export async function migrateAppSchema(db: Client): Promise<void> {
     if (isRemoteDatabase(resolveDatabaseConfig())) {
         return;
@@ -86,5 +96,40 @@ export async function migrateAppSchema(db: Client): Promise<void> {
         await db.execute(statement);
     }
 
-    await migratePreferencesThemeSystem(db);
+    await runPendingMigrations(db);
+}
+
+const ACCENT_COLOR_MIGRATION_ID = 'preferences-accent-color';
+
+async function migratePreferencesAccentColor(db: Client): Promise<void> {
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS app_migrations (
+            id TEXT PRIMARY KEY,
+            applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    `);
+
+    const applied = await db.execute({
+        sql: 'SELECT id FROM app_migrations WHERE id = ?',
+        args: [ACCENT_COLOR_MIGRATION_ID],
+    });
+    if (applied.rows.length > 0) {
+        return;
+    }
+
+    const columns = await db.execute('PRAGMA table_info(preferences)');
+    const hasAccentColumn = columns.rows.some(
+        (row) => String((row as { name: string }).name) === 'accent_color',
+    );
+    if (!hasAccentColumn) {
+        await db.execute(`
+            ALTER TABLE preferences
+            ADD COLUMN accent_color TEXT NOT NULL DEFAULT 'teal'
+        `);
+    }
+
+    await db.execute({
+        sql: 'INSERT INTO app_migrations (id) VALUES (?)',
+        args: [ACCENT_COLOR_MIGRATION_ID],
+    });
 }

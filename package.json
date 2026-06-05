@@ -16,7 +16,8 @@
         "precommit": "lint-staged && npm run test",
         "test": "vitest run",
         "test:watch": "vitest",
-        "db:migrate": "echo y | npx @better-auth/cli migrate --config src/features/auth/auth.ts"
+        "db:migrate": "echo y | npx @better-auth/cli migrate --config src/features/auth/auth.ts",
+        "db:prepare": "vitest run --config vitest.db-prepare.config.ts"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx,mjs,cjs}": [

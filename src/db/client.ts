@@ -1,6 +1,6 @@
 import type { Client } from '@libsql/client';
 import { createLibsqlClient } from './createLibsqlClient';
-import { migrateAppSchema } from './migrate';
+import { migrateAppSchema, runPendingMigrations } from './migrate';
 import { resolveDatabaseConfig } from './resolveDbUrl';
 
 let dbInstance: Client | null = null;
@@ -10,14 +10,22 @@ async function initializeDb(): Promise<Client> {
     const config = resolveDatabaseConfig();
     const db = await createLibsqlClient(config);
     await migrateAppSchema(db);
-    dbInstance = db;
     return db;
 }
 
 export async function getDbReady(): Promise<Client> {
-    if (dbInstance) return dbInstance;
-    if (!initPromise) initPromise = initializeDb();
-    return initPromise;
+    if (!dbInstance) {
+        if (!initPromise) {
+            initPromise = initializeDb().then((db) => {
+                dbInstance = db;
+                return db;
+            });
+        }
+        await initPromise;
+    }
+
+    await runPendingMigrations(dbInstance);
+    return dbInstance;
 }
 
 export function getDb(): Client {

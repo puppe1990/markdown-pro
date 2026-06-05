@@ -30,10 +30,10 @@ tailwind.config = {
                     muted: '#f3f1ed',
                 },
                 accent: {
-                    DEFAULT: '#0d9488',
-                    hover: '#0f766e',
-                    light: '#2dd4bf',
-                    muted: 'rgba(13, 148, 136, 0.12)',
+                    DEFAULT: 'var(--color-accent)',
+                    hover: 'var(--color-accent-hover)',
+                    light: 'var(--color-accent-light)',
+                    muted: 'var(--color-accent-muted)',
                 },
             },
             animation: {
@@ -62,11 +62,17 @@ tailwind.config = {
 export const GLOBAL_CSS = `
     :root {
         --color-accent: #0d9488;
+        --color-accent-hover: #0f766e;
+        --color-accent-light: #14b8a6;
+        --color-accent-muted: rgba(13, 148, 136, 0.12);
         --color-paper: #f8f6f3;
         --color-surface: #ffffff;
     }
     .dark {
         --color-accent: #2dd4bf;
+        --color-accent-hover: #14b8a6;
+        --color-accent-light: #5eead4;
+        --color-accent-muted: rgba(45, 212, 191, 0.12);
         --color-paper: #0c0f0e;
         --color-surface: #141918;
     }

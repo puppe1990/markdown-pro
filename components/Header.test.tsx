@@ -13,8 +13,10 @@ describe('Header', () => {
     it('renders the export menu above surrounding layout layers', async () => {
         const { container } = render(
             <Header
-                theme="dark"
-                toggleTheme={vi.fn()}
+                themePreference="dark"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
                 onHistoryClick={vi.fn()}
                 onReadingModeToggle={vi.fn()}
                 isReadingMode={false}
@@ -42,8 +44,10 @@ describe('Header', () => {
     it('shows saved checkmark when syncStatus is saved', () => {
         render(
             <Header
-                theme="light"
-                toggleTheme={vi.fn()}
+                themePreference="light"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
                 onHistoryClick={vi.fn()}
                 onReadingModeToggle={vi.fn()}
                 isReadingMode={false}
@@ -61,8 +65,10 @@ describe('Header', () => {
     it('shows save icon when syncStatus is pending', () => {
         render(
             <Header
-                theme="light"
-                toggleTheme={vi.fn()}
+                themePreference="light"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
                 onHistoryClick={vi.fn()}
                 onReadingModeToggle={vi.fn()}
                 isReadingMode={false}
@@ -82,8 +88,10 @@ describe('Header', () => {
 
         render(
             <Header
-                theme="light"
-                toggleTheme={vi.fn()}
+                themePreference="light"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
                 onHistoryClick={vi.fn()}
                 onReadingModeToggle={vi.fn()}
                 isReadingMode={false}
@@ -103,8 +111,10 @@ describe('Header', () => {
     it('does not show sync button when syncStatus is not provided', () => {
         render(
             <Header
-                theme="light"
-                toggleTheme={vi.fn()}
+                themePreference="light"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
                 onHistoryClick={vi.fn()}
                 onReadingModeToggle={vi.fn()}
                 isReadingMode={false}
@@ -119,5 +129,54 @@ describe('Header', () => {
         expect(
             screen.queryByRole('button', { name: 'Save changes' }),
         ).not.toBeTruthy();
+    });
+
+    it('opens settings modal with theme options when settings button is clicked', async () => {
+        render(
+            <Header
+                themePreference="system"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
+                onHistoryClick={vi.fn()}
+                onReadingModeToggle={vi.fn()}
+                isReadingMode={false}
+                markdownContent=""
+                onImportMarkdown={vi.fn()}
+            />,
+        );
+
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+        expect(
+            screen.getByRole('dialog', { name: 'Settings' }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: 'System' })).toBeChecked();
+    });
+
+    it('calls onThemePreferenceChange when selecting theme in settings modal', async () => {
+        const onThemePreferenceChange = vi.fn();
+        const onAccentColorChange = vi.fn();
+
+        render(
+            <Header
+                themePreference="system"
+                onThemePreferenceChange={onThemePreferenceChange}
+                accentColor="teal"
+                onAccentColorChange={onAccentColorChange}
+                onHistoryClick={vi.fn()}
+                onReadingModeToggle={vi.fn()}
+                isReadingMode={false}
+                markdownContent=""
+                onImportMarkdown={vi.fn()}
+            />,
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
+        await userEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+
+        expect(onThemePreferenceChange).toHaveBeenCalledWith('dark');
     });
 });
