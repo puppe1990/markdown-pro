@@ -10,6 +10,7 @@ import {
 } from './icons';
 import { addImage } from '../services/imageService';
 import { borderSubtle, btnIcon, surfaceBar } from '@/src/lib/ui-classes';
+import { IconTooltipButton } from './IconTooltipButton';
 
 interface ToolbarProps {
     textareaRef: React.RefObject<HTMLTextAreaElement>;
@@ -170,8 +171,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ textareaRef, setMarkdown }) => {
             className={`flex items-center px-3 py-2 border-b ${borderSubtle} ${surfaceBar} gap-0.5`}
         >
             {buttons.map((btn) => (
-                <button
+                <IconTooltipButton
                     key={btn.title}
+                    tooltip={btn.title}
                     onClick={() => {
                         if (btn.type === 'format') {
                             applyFormat(btn.format);
@@ -180,10 +182,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ textareaRef, setMarkdown }) => {
                         }
                     }}
                     className={btnIcon}
-                    title={btn.title}
                 >
                     {btn.icon}
-                </button>
+                </IconTooltipButton>
             ))}
             <input
                 type="file"

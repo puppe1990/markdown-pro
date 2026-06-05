@@ -30,7 +30,7 @@ describe('Header', () => {
         expect(header?.className).toContain('z-20');
 
         await userEvent.click(
-            screen.getByRole('button', { name: /^export$/i }),
+            screen.getByRole('button', { name: /export document/i }),
         );
 
         const exportMenu = screen.getByText('Markdown (.md)').closest('div');
@@ -53,7 +53,9 @@ describe('Header', () => {
             />,
         );
 
-        expect(screen.getByTitle('All changes saved')).toBeTruthy();
+        expect(
+            screen.getByRole('button', { name: 'All changes saved' }),
+        ).toBeTruthy();
     });
 
     it('shows save icon when syncStatus is pending', () => {
@@ -70,7 +72,9 @@ describe('Header', () => {
             />,
         );
 
-        expect(screen.getByTitle('Save changes')).toBeTruthy();
+        expect(
+            screen.getByRole('button', { name: 'Save changes' }),
+        ).toBeTruthy();
     });
 
     it('calls onSyncClick when sync button is clicked and status is pending', async () => {
@@ -90,7 +94,9 @@ describe('Header', () => {
             />,
         );
 
-        await userEvent.click(screen.getByTitle('Save changes'));
+        await userEvent.click(
+            screen.getByRole('button', { name: 'Save changes' }),
+        );
         expect(onSyncClick).toHaveBeenCalledTimes(1);
     });
 
@@ -107,7 +113,11 @@ describe('Header', () => {
             />,
         );
 
-        expect(screen.queryByTitle('All changes saved')).not.toBeTruthy();
-        expect(screen.queryByTitle('Save changes')).not.toBeTruthy();
+        expect(
+            screen.queryByRole('button', { name: 'All changes saved' }),
+        ).not.toBeTruthy();
+        expect(
+            screen.queryByRole('button', { name: 'Save changes' }),
+        ).not.toBeTruthy();
     });
 });
