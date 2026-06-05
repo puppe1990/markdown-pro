@@ -7,6 +7,8 @@ import {
 export interface OptimisticOptions<TVariables> {
     queryKey: unknown[];
     updater: (oldData: unknown, variables: TVariables) => unknown;
+    /** When true, writes mutation result to cache on success instead of invalidating. */
+    commitResultOnSuccess?: boolean;
 }
 
 /**
@@ -27,6 +29,7 @@ export function useOptimisticMutation<
     options: OptimisticOptions<TVariables>,
 ): UseMutationResult<TData, TError, TVariables> {
     const qc = useQueryClient();
+    const commitResult = options.commitResultOnSuccess ?? false;
 
     return useMutation({
         mutationFn,
@@ -38,6 +41,11 @@ export function useOptimisticMutation<
             );
             return { previous };
         },
+        onSuccess: (data) => {
+            if (commitResult) {
+                qc.setQueryData(options.queryKey, data);
+            }
+        },
         onError: (
             _err,
             _variables,
@@ -47,8 +55,10 @@ export function useOptimisticMutation<
                 qc.setQueryData(options.queryKey, context.previous);
             }
         },
-        onSettled: () => {
-            qc.invalidateQueries({ queryKey: options.queryKey });
+        onSettled: (_data, error) => {
+            if (!commitResult || error) {
+                qc.invalidateQueries({ queryKey: options.queryKey });
+            }
         },
     });
 }

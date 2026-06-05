@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-    SunIcon,
-    MoonIcon,
+    SettingsIcon,
     ClockIcon,
     DownloadIcon,
     UploadIcon,
@@ -23,6 +22,9 @@ import {
     exportAsDocx,
 } from '../services/exportService';
 import { SyncStatus } from '../hooks/useDebouncedSync';
+import SettingsModal from './SettingsModal';
+import type { ThemePreference } from '@/src/features/preferences/theme';
+import type { AccentColorId } from '@/src/features/preferences/accent';
 import {
     borderSubtle,
     btnIcon,
@@ -34,8 +36,10 @@ import {
 } from '@/src/lib/ui-classes';
 
 interface HeaderProps {
-    theme: 'light' | 'dark';
-    toggleTheme: () => void;
+    themePreference: ThemePreference;
+    onThemePreferenceChange: (preference: ThemePreference) => void;
+    accentColor: AccentColorId;
+    onAccentColorChange: (accentColor: AccentColorId) => void;
     onHistoryClick: () => void;
     onReadingModeToggle: () => void;
     isReadingMode: boolean;
@@ -49,8 +53,10 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({
-    theme,
-    toggleTheme,
+    themePreference,
+    onThemePreferenceChange,
+    accentColor,
+    onAccentColorChange,
     onHistoryClick,
     onReadingModeToggle,
     isReadingMode,
@@ -62,6 +68,7 @@ const Header: React.FC<HeaderProps> = ({
     syncStatus,
     onSyncClick,
 }) => {
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -224,16 +231,20 @@ const Header: React.FC<HeaderProps> = ({
                     <BookOpenIcon className="w-5 h-5" />
                 </IconTooltipButton>
                 <IconTooltipButton
-                    tooltip="Toggle Theme"
-                    onClick={toggleTheme}
+                    tooltip="Settings"
+                    onClick={() => setIsSettingsOpen(true)}
                     className={btnIcon}
                 >
-                    {theme === 'light' ? (
-                        <MoonIcon className="w-5 h-5" />
-                    ) : (
-                        <SunIcon className="w-5 h-5" />
-                    )}
+                    <SettingsIcon className="w-5 h-5" />
                 </IconTooltipButton>
+                <SettingsModal
+                    isOpen={isSettingsOpen}
+                    themePreference={themePreference}
+                    onThemePreferenceChange={onThemePreferenceChange}
+                    accentColor={accentColor}
+                    onAccentColorChange={onAccentColorChange}
+                    onClose={() => setIsSettingsOpen(false)}
+                />
                 {userEmail && (
                     <div className="relative" ref={userMenuRef}>
                         <IconTooltipButton

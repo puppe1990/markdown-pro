@@ -8,8 +8,12 @@ import TabBar from '@/components/TabBar';
 import VersionHistoryPanel from '@/components/VersionHistoryPanel';
 import { useTabManager } from '@/hooks/useTabManager';
 import { useVersionHistory } from '@/hooks/useVersionHistory';
-import { usePreferences } from '@/src/features/preferences/usePreferences';
-import { useSetTheme } from '@/src/features/preferences/usePreferences';
+import {
+    usePreferences,
+    useSetAccentColor,
+    useSetTheme,
+} from '@/src/features/preferences/usePreferences';
+import { useApplyAccentColor } from '@/src/features/preferences/useApplyAccentColor';
 import { Version } from '@/types';
 import { useLocalStorageMigration } from '@/src/hooks/useLocalStorageMigration';
 import { useDebouncedSync } from '@/hooks/useDebouncedSync';
@@ -33,11 +37,17 @@ function DashboardPage() {
     const navigate = useNavigate();
     const { data: prefs } = usePreferences();
     const { mutate: setThemeMutate } = useSetTheme();
+    const { mutate: setAccentColorMutate } = useSetAccentColor();
 
-    const { resolved: theme, toggleTheme } = useAppTheme({
-        preference: prefs?.theme ?? 'system',
+    const themePreference = prefs?.theme ?? 'system';
+    const accentColor = prefs?.accentColor ?? 'teal';
+
+    const { resolved: colorScheme } = useAppTheme({
+        preference: themePreference,
         onPreferenceChange: (next) => setThemeMutate({ data: { theme: next } }),
     });
+
+    useApplyAccentColor({ accentColor, colorScheme });
 
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
     const [isReadingMode, setIsReadingMode] = useState(false);
@@ -121,8 +131,14 @@ function DashboardPage() {
     return (
         <div className={appShell}>
             <Header
-                theme={theme}
-                toggleTheme={toggleTheme}
+                themePreference={themePreference}
+                onThemePreferenceChange={(next) =>
+                    setThemeMutate({ data: { theme: next } })
+                }
+                accentColor={accentColor}
+                onAccentColorChange={(next) =>
+                    setAccentColorMutate({ data: { accentColor: next } })
+                }
                 onHistoryClick={() => setIsHistoryPanelOpen(true)}
                 onReadingModeToggle={() => setIsReadingMode(!isReadingMode)}
                 isReadingMode={isReadingMode}

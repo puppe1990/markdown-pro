@@ -18,9 +18,10 @@ CREATE TABLE IF NOT EXISTS versions (
 );
 
 CREATE TABLE IF NOT EXISTS preferences (
-    user_id    TEXT PRIMARY KEY,
-    theme      TEXT NOT NULL CHECK(theme IN ('light', 'dark', 'system')) DEFAULT 'system',
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    user_id      TEXT PRIMARY KEY,
+    theme        TEXT NOT NULL CHECK(theme IN ('light', 'dark', 'system')) DEFAULT 'system',
+    accent_color TEXT NOT NULL DEFAULT 'teal',
+    updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_tabs_user_id ON tabs(user_id);

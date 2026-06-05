@@ -2,6 +2,7 @@ import path from 'path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+    root: __dirname,
     resolve: {
         alias: {
             '@': path.resolve(__dirname, '.'),
@@ -15,7 +16,14 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['./src/test/setup.ts'],
-        include: ['**/*.test.{ts,tsx}'],
+        include: [
+            'src/**/*.test.{ts,tsx}',
+            'components/**/*.test.{ts,tsx}',
+            'hooks/**/*.test.{ts,tsx}',
+            'services/**/*.test.{ts,tsx}',
+            'app/**/*.test.{ts,tsx}',
+        ],
+        exclude: ['node_modules/**', 'dist/**', '.worktrees/**', 'scripts/**'],
         env: {
             DATABASE_URL: 'file::memory:',
             BETTER_AUTH_URL: 'http://localhost:3000',
