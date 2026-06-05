@@ -5,9 +5,10 @@ import {
     type Preferences,
 } from './preferences.functions';
 import { useOptimisticMutation } from '@/src/lib/use-optimistic-mutation';
+import type { ThemePreference } from './theme';
 
 type SetThemeVariables = {
-    data: { theme: 'light' | 'dark' };
+    data: { theme: ThemePreference };
 };
 
 /**

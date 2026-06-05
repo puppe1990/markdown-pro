@@ -17,6 +17,60 @@ function isRemoteDatabase(config: DatabaseConfig): boolean {
     );
 }
 
+const THEME_SYSTEM_MIGRATION_ID = 'preferences-theme-system';
+
+async function migratePreferencesThemeSystem(db: Client): Promise<void> {
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS app_migrations (
+            id TEXT PRIMARY KEY,
+            applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    `);
+
+    const applied = await db.execute({
+        sql: 'SELECT id FROM app_migrations WHERE id = ?',
+        args: [THEME_SYSTEM_MIGRATION_ID],
+    });
+    if (applied.rows.length > 0) {
+        return;
+    }
+
+    const tableRow = await db.execute({
+        sql: "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'preferences'",
+    });
+    const createSql = String(
+        (tableRow.rows[0] as { sql?: string } | undefined)?.sql ?? '',
+    );
+    if (createSql.includes("'system'")) {
+        await db.execute({
+            sql: 'INSERT INTO app_migrations (id) VALUES (?)',
+            args: [THEME_SYSTEM_MIGRATION_ID],
+        });
+        return;
+    }
+
+    await db.execute(`
+        CREATE TABLE preferences_theme_system (
+            user_id    TEXT PRIMARY KEY,
+            theme      TEXT NOT NULL DEFAULT 'system'
+                CHECK(theme IN ('light', 'dark', 'system')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    `);
+    await db.execute(`
+        INSERT INTO preferences_theme_system (user_id, theme, updated_at)
+        SELECT user_id, theme, updated_at FROM preferences
+    `);
+    await db.execute('DROP TABLE preferences');
+    await db.execute(
+        'ALTER TABLE preferences_theme_system RENAME TO preferences',
+    );
+    await db.execute({
+        sql: 'INSERT INTO app_migrations (id) VALUES (?)',
+        args: [THEME_SYSTEM_MIGRATION_ID],
+    });
+}
+
 export async function migrateAppSchema(db: Client): Promise<void> {
     if (isRemoteDatabase(resolveDatabaseConfig())) {
         return;
@@ -31,4 +85,6 @@ export async function migrateAppSchema(db: Client): Promise<void> {
     for (const statement of statements) {
         await db.execute(statement);
     }
+
+    await migratePreferencesThemeSystem(db);
 }

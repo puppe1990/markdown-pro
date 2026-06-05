@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { BrandMark } from './BrandMark';
+import { useAppTheme } from '@/src/features/preferences/useAppTheme';
 
 interface AuthShellProps {
     title?: string;
@@ -8,6 +9,8 @@ interface AuthShellProps {
 
 /** Centered auth layout with ambient glow and elevated card. */
 export function AuthShell({ title, children }: AuthShellProps) {
+    useAppTheme({ preference: 'system' });
+
     return (
         <div className="auth-glow min-h-screen flex items-center justify-center bg-paper dark:bg-ink-950 relative overflow-hidden px-4 py-12">
             <div className="relative w-full max-w-md">

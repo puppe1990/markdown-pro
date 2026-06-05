@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS versions (
 
 CREATE TABLE IF NOT EXISTS preferences (
     user_id    TEXT PRIMARY KEY,
-    theme      TEXT NOT NULL CHECK(theme IN ('light', 'dark')) DEFAULT 'light',
+    theme      TEXT NOT NULL CHECK(theme IN ('light', 'dark', 'system')) DEFAULT 'system',
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

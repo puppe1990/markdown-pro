@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSession, signOut } from '@/src/features/auth/auth-client';
 import Header from '@/components/Header';
 import Editor from '@/components/Editor';
@@ -22,6 +22,7 @@ import {
     tabActive,
     tabInactive,
 } from '@/src/lib/ui-classes';
+import { useAppTheme } from '@/src/features/preferences/useAppTheme';
 
 export const Route = createFileRoute('/dashboard')({
     component: DashboardPage,
@@ -33,17 +34,9 @@ function DashboardPage() {
     const { data: prefs } = usePreferences();
     const { mutate: setThemeMutate } = useSetTheme();
 
-    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('theme') as
-                | 'light'
-                | 'dark'
-                | null;
-            if (saved) return saved;
-            if (window.matchMedia?.('(prefers-color-scheme: dark)').matches)
-                return 'dark';
-        }
-        return 'light';
+    const { resolved: theme, toggleTheme } = useAppTheme({
+        preference: prefs?.theme ?? 'system',
+        onPreferenceChange: (next) => setThemeMutate({ data: { theme: next } }),
     });
 
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
@@ -103,33 +96,11 @@ function DashboardPage() {
     useLocalStorageMigration();
 
     useEffect(() => {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }, [theme]);
-
-    useEffect(() => {
-        if (prefs?.theme && prefs.theme !== theme) {
-            setTheme(prefs.theme);
-        }
-    }, [prefs?.theme, theme, setTheme]);
-
-    useEffect(() => {
         if (isPending) return;
         if (!session) {
             navigate({ to: '/login' });
         }
     }, [session, isPending, navigate]);
-
-    const toggleTheme = useCallback(() => {
-        setTheme((prev) => {
-            const next = prev === 'light' ? 'dark' : 'light';
-            setThemeMutate({ data: { theme: next } });
-            return next;
-        });
-    }, [setThemeMutate]);
 
     const handleRevert = useCallback(
         (version: Version) => {
