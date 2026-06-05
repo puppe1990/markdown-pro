@@ -16,6 +16,7 @@ import {
     SpinnerIcon,
 } from './icons';
 import { BrandMark } from './BrandMark';
+import { IconTooltipButton } from './IconTooltipButton';
 import {
     exportAsMarkdown,
     exportAsPdf,
@@ -176,13 +177,13 @@ const Header: React.FC<HeaderProps> = ({
         >
             <BrandMark size="sm" />
             <div className="flex items-center gap-1">
-                <button
+                <IconTooltipButton
+                    tooltip="Import Markdown"
                     onClick={() => importInputRef.current?.click()}
                     className={btnIcon}
-                    title="Import Markdown"
                 >
                     <UploadIcon className="w-5 h-5" />
-                </button>
+                </IconTooltipButton>
                 <input
                     type="file"
                     ref={importInputRef}
@@ -191,78 +192,57 @@ const Header: React.FC<HeaderProps> = ({
                     className="hidden"
                     aria-hidden="true"
                 />
-                <button
+                <IconTooltipButton
+                    tooltip={isCopied ? 'Copied!' : 'Copy Markdown'}
                     onClick={handleCopy}
                     className={
                         isCopied
                             ? 'p-2 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
                             : btnIcon
                     }
-                    title={isCopied ? 'Copied!' : 'Copy Markdown'}
                 >
                     {isCopied ? (
                         <CheckIcon className="w-5 h-5" />
                     ) : (
                         <CopyIcon className="w-5 h-5" />
                     )}
-                </button>
-                {syncStatus && (
-                    <button
-                        onClick={onSyncClick}
-                        className={syncBtnClass}
-                        title={
-                            syncStatus === 'saved'
-                                ? 'All changes saved'
-                                : syncStatus === 'saving'
-                                  ? 'Saving...'
-                                  : syncStatus === 'error'
-                                    ? 'Sync failed - click to retry'
-                                    : 'Save changes'
-                        }
-                    >
-                        {syncStatus === 'saved' ? (
-                            <CheckIcon className="w-5 h-5" />
-                        ) : syncStatus === 'saving' ? (
-                            <SpinnerIcon className="w-5 h-5" />
-                        ) : (
-                            <SaveIcon className="w-5 h-5" />
-                        )}
-                    </button>
-                )}
-                <button
+                </IconTooltipButton>
+                <IconTooltipButton
+                    tooltip="Version History"
                     onClick={onHistoryClick}
                     className={btnIcon}
-                    title="Version History"
                 >
                     <ClockIcon className="w-5 h-5" />
-                </button>
-                <button
+                </IconTooltipButton>
+                <IconTooltipButton
+                    tooltip={
+                        isReadingMode ? 'Exit Reading Mode' : 'Reading Mode'
+                    }
                     onClick={onReadingModeToggle}
                     className={isReadingMode ? btnIconActive : btnIcon}
-                    title={isReadingMode ? 'Exit Reading Mode' : 'Reading Mode'}
                 >
                     <BookOpenIcon className="w-5 h-5" />
-                </button>
-                <button
+                </IconTooltipButton>
+                <IconTooltipButton
+                    tooltip="Toggle Theme"
                     onClick={toggleTheme}
                     className={btnIcon}
-                    title="Toggle Theme"
                 >
                     {theme === 'light' ? (
                         <MoonIcon className="w-5 h-5" />
                     ) : (
                         <SunIcon className="w-5 h-5" />
                     )}
-                </button>
+                </IconTooltipButton>
                 {userEmail && (
                     <div className="relative" ref={userMenuRef}>
-                        <button
+                        <IconTooltipButton
+                            tooltip="User Menu"
                             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                             className={btnIcon}
-                            title="User Menu"
                         >
                             <UserIcon className="w-5 h-5" />
-                        </button>
+                        </IconTooltipButton>
                         {isUserMenuOpen && (
                             <div className={`${dropdownMenu} w-60`}>
                                 <div className="px-3 py-2.5 border-b border-ink-border/40 dark:border-ink-border-dark/40 mb-1">
@@ -286,15 +266,38 @@ const Header: React.FC<HeaderProps> = ({
                         )}
                     </div>
                 )}
+                {syncStatus && (
+                    <IconTooltipButton
+                        tooltip={
+                            syncStatus === 'saved'
+                                ? 'All changes saved'
+                                : syncStatus === 'saving'
+                                  ? 'Saving...'
+                                  : syncStatus === 'error'
+                                    ? 'Sync failed - click to retry'
+                                    : 'Save changes'
+                        }
+                        onClick={onSyncClick}
+                        className={syncBtnClass}
+                    >
+                        {syncStatus === 'saved' ? (
+                            <CheckIcon className="w-5 h-5" />
+                        ) : syncStatus === 'saving' ? (
+                            <SpinnerIcon className="w-5 h-5" />
+                        ) : (
+                            <SaveIcon className="w-5 h-5" />
+                        )}
+                    </IconTooltipButton>
+                )}
                 <div className="relative ml-1" ref={exportMenuRef}>
-                    <button
+                    <IconTooltipButton
+                        tooltip="Export Document"
                         onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
                         className={`${btnPrimary} py-2`}
-                        title="Export Document"
                     >
                         <DownloadIcon className="w-5 h-5" />
                         <span className="hidden sm:inline">Export</span>
-                    </button>
+                    </IconTooltipButton>
                     {isExportMenuOpen && (
                         <div className={`${dropdownMenu} w-52`}>
                             <button

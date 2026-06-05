@@ -34,6 +34,10 @@ export const btnIcon =
 
 export const btnIconActive = 'p-2 rounded-lg bg-accent-muted text-accent';
 
+/** Label shown below icon buttons on hover/focus (header sits at viewport top). */
+export const iconTooltipLabel =
+    'pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 rounded-md bg-ink-900 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-stone-700 z-50 whitespace-nowrap';
+
 export const tabActive = 'bg-accent-muted text-accent border-b-2 border-accent';
 
 export const tabInactive =
