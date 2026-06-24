@@ -3,11 +3,16 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTabManager } from './useTabManager';
 
+const mockHideTab = vi.fn();
+const mockDeleteTab = vi.fn();
+
 vi.mock('@/src/features/tabs/useTabs', () => ({
     useTabs: () => ({ data: undefined, isLoading: false }),
+    useAllTabs: () => ({ data: undefined, isLoading: false }),
     useCreateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
     useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
-    useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+    useHideTab: () => ({ mutate: mockHideTab }),
+    useDeleteTab: () => ({ mutate: mockDeleteTab }),
 }));
 
 function createWrapper() {
@@ -22,6 +27,8 @@ function createWrapper() {
 describe('useTabManager', () => {
     beforeEach(() => {
         localStorage.clear();
+        mockHideTab.mockClear();
+        mockDeleteTab.mockClear();
     });
 
     const loadFreshUseTabManager = async () => {
@@ -178,7 +185,7 @@ describe('useTabManager', () => {
         expect(result.current.activeTabId).toBe(secondId);
     });
 
-    it('cannot close last tab', () => {
+    it('can close the last open tab', () => {
         const { result } = renderHook(() => useTabManager(), {
             wrapper: createWrapper(),
         });
@@ -186,7 +193,8 @@ describe('useTabManager', () => {
         act(() => {
             result.current.closeTab(id);
         });
-        expect(result.current.tabs).toHaveLength(1);
+        expect(mockDeleteTab).toHaveBeenCalledWith({ data: { id } });
+        expect(result.current.tabs).toHaveLength(0);
     });
 
     it('keeps one tab after closing a restored tab with a new tab added', async () => {
@@ -305,6 +313,7 @@ describe('useTabManager', () => {
 
         vi.doMock('@/src/features/tabs/useTabs', () => ({
             useTabs: () => ({ data: remoteTabs, isLoading: false }),
+            useAllTabs: () => ({ data: remoteTabs, isLoading: false }),
             useCreateTab: () => ({
                 mutate: (v: { data: { id: string; name?: string } }) => {
                     lastCreateVars = v;
@@ -318,6 +327,7 @@ describe('useTabManager', () => {
                 },
             }),
             useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+            useHideTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
             useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
         }));
 

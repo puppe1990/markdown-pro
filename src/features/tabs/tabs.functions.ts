@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getRequest } from '@tanstack/react-start/server';
+import { isSavableTab } from './isSavableTab';
 
 interface TabRow {
     id: string;
@@ -7,6 +8,7 @@ interface TabRow {
     name: string;
     content: string;
     position: number;
+    is_open: number;
     created_at: string;
     updated_at: string;
 }
@@ -15,6 +17,11 @@ export interface Tab {
     id: string;
     name: string;
     content: string;
+}
+
+export interface SavedTab extends Tab {
+    isOpen: boolean;
+    updatedAt: string;
 }
 
 async function requireAuth() {
@@ -29,6 +36,16 @@ function tabRowToTab(row: TabRow): Tab {
     return { id: row.id, name: row.name, content: row.content };
 }
 
+function tabRowToSavedTab(row: TabRow): SavedTab {
+    return {
+        id: row.id,
+        name: row.name,
+        content: row.content,
+        isOpen: row.is_open === 1,
+        updatedAt: row.updated_at,
+    };
+}
+
 export const getTabs = createServerFn({ method: 'GET' }).handler(
     async (): Promise<Tab[]> => {
         const session = await requireAuth();
@@ -36,12 +53,30 @@ export const getTabs = createServerFn({ method: 'GET' }).handler(
 
         const db = await (await import('@/src/db/client')).getDbReady();
         const result = await db.execute({
-            sql: `SELECT id, user_id, name, content, position, created_at, updated_at
-              FROM tabs WHERE user_id = ? ORDER BY position`,
+            sql: `SELECT id, user_id, name, content, position, is_open, created_at, updated_at
+              FROM tabs WHERE user_id = ? AND is_open = 1 ORDER BY position`,
             args: [session.user.id],
         });
 
         return (result.rows as unknown as TabRow[]).map(tabRowToTab);
+    },
+);
+
+export const getAllTabs = createServerFn({ method: 'GET' }).handler(
+    async (): Promise<SavedTab[]> => {
+        const session = await requireAuth();
+        if (!session) throw new Error('Unauthorized');
+
+        const db = await (await import('@/src/db/client')).getDbReady();
+        const result = await db.execute({
+            sql: `SELECT id, user_id, name, content, position, is_open, created_at, updated_at
+              FROM tabs WHERE user_id = ? ORDER BY updated_at DESC`,
+            args: [session.user.id],
+        });
+
+        return (result.rows as unknown as TabRow[])
+            .map(tabRowToSavedTab)
+            .filter((tab) => isSavableTab(tab));
     },
 );
 
@@ -69,8 +104,8 @@ export const createTab = createServerFn({ method: 'POST' })
         );
 
         const result = await db.execute({
-            sql: `INSERT INTO tabs (id, user_id, name, content, position)
-                  VALUES (?, ?, ?, '', ?) RETURNING *`,
+            sql: `INSERT INTO tabs (id, user_id, name, content, position, is_open)
+                  VALUES (?, ?, ?, '', ?, 1) RETURNING *`,
             args: [data.id, session.user.id, data.name, position],
         });
 
@@ -110,6 +145,45 @@ export const updateTab = createServerFn({ method: 'POST' })
         const result = await db.execute({
             sql: `UPDATE tabs SET ${sets.join(', ')} WHERE id = ? AND user_id = ? RETURNING *`,
             args,
+        });
+        if (result.rows.length === 0) throw new Error('Tab not found');
+        return tabRowToTab(result.rows[0] as unknown as TabRow);
+    });
+
+export const hideTab = createServerFn({ method: 'POST' })
+    .inputValidator((data: unknown) => {
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
+        return { id: String((data as Record<string, unknown>).id) };
+    })
+    .handler(async ({ data }): Promise<void> => {
+        const session = await requireAuth();
+        if (!session) throw new Error('Unauthorized');
+
+        const db = await (await import('@/src/db/client')).getDbReady();
+        const result = await db.execute({
+            sql: `UPDATE tabs SET is_open = 0, updated_at = datetime('now')
+                  WHERE id = ? AND user_id = ?`,
+            args: [data.id, session.user.id],
+        });
+        if (result.rowsAffected === 0) throw new Error('Tab not found');
+    });
+
+export const openTab = createServerFn({ method: 'POST' })
+    .inputValidator((data: unknown) => {
+        if (typeof data !== 'object' || data === null)
+            throw new Error('Invalid input');
+        return { id: String((data as Record<string, unknown>).id) };
+    })
+    .handler(async ({ data }): Promise<Tab> => {
+        const session = await requireAuth();
+        if (!session) throw new Error('Unauthorized');
+
+        const db = await (await import('@/src/db/client')).getDbReady();
+        const result = await db.execute({
+            sql: `UPDATE tabs SET is_open = 1, updated_at = datetime('now')
+                  WHERE id = ? AND user_id = ? RETURNING *`,
+            args: [data.id, session.user.id],
         });
         if (result.rows.length === 0) throw new Error('Tab not found');
         return tabRowToTab(result.rows[0] as unknown as TabRow);

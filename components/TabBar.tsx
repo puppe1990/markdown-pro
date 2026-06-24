@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Tab } from '../hooks/useTabManager';
-import ConfirmModal from './ConfirmModal';
 import {
     borderSubtle,
     surfaceBar,
@@ -27,7 +26,6 @@ const TabBar: React.FC<Props> = ({
 }) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editValue, setEditValue] = useState('');
-    const [pendingCloseId, setPendingCloseId] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const tabRefs = useRef<Map<string, HTMLElement>>(new Map());
     const prevTabsLength = useRef(tabs.length);
@@ -74,22 +72,7 @@ const TabBar: React.FC<Props> = ({
     };
 
     const handleClose = (tab: Tab) => {
-        if (tab.content.trim()) {
-            setPendingCloseId(tab.id);
-            return;
-        }
         onClose(tab.id);
-    };
-
-    const confirmClose = () => {
-        if (pendingCloseId) {
-            onClose(pendingCloseId);
-            setPendingCloseId(null);
-        }
-    };
-
-    const cancelClose = () => {
-        setPendingCloseId(null);
     };
 
     return (
@@ -164,13 +147,6 @@ const TabBar: React.FC<Props> = ({
             >
                 +
             </button>
-            <ConfirmModal
-                isOpen={pendingCloseId !== null}
-                title="Close tab?"
-                message="This tab has content. Are you sure you want to close it?"
-                onConfirm={confirmClose}
-                onCancel={cancelClose}
-            />
         </div>
     );
 };

@@ -1,12 +1,15 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
     useTabs,
+    useAllTabs,
     useCreateTab,
     useUpdateTab,
+    useHideTab,
     useDeleteTab,
 } from '@/src/features/tabs/useTabs';
 import { useQueryClient } from '@tanstack/react-query';
 import { buildDisplayTabs } from './tab-display';
+import { isSavableTab } from '@/src/features/tabs/isSavableTab';
 
 export interface Tab {
     id: string;
@@ -25,8 +28,10 @@ const defaultTab = (): Tab => ({ id: newId(), name: 'Untitled', content: '' });
 export function useTabManager() {
     const qc = useQueryClient();
     const { data: queryTabs, isLoading } = useTabs();
+    const { data: allTabs } = useAllTabs();
     const createTabMut = useCreateTab();
     const updateTabMut = useUpdateTab();
+    const hideTabMut = useHideTab();
     const deleteTabMut = useDeleteTab();
     const ensuredDefaultTab = useRef(false);
     const addingTabRef = useRef<string | null>(null);
@@ -74,6 +79,12 @@ export function useTabManager() {
 
         if (queryTabs.length === 0) {
             if (!ensuredDefaultTab.current) {
+                const hasSavedDocuments = (allTabs?.length ?? 0) > 0;
+                if (hasSavedDocuments) {
+                    ensuredDefaultTab.current = true;
+                    setActiveTabIdState('');
+                    return;
+                }
                 ensuredDefaultTab.current = true;
                 const id = newId();
                 createTabMut.mutate({ data: { id, name: 'Untitled' } });
@@ -119,7 +130,7 @@ export function useTabManager() {
                 ? prev
                 : queryTabs[0].id;
         });
-    }, [queryTabs, isLoading, createTabMut]);
+    }, [queryTabs, isLoading, allTabs, createTabMut]);
 
     const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
@@ -147,7 +158,10 @@ export function useTabManager() {
 
     const closeTab = useCallback(
         (id: string) => {
-            if (tabs.length === 1) return;
+            const tabToClose = tabs.find((tab) => tab.id === id);
+            const shouldSave =
+                tabToClose !== undefined && isSavableTab(tabToClose);
+
             setLocalTabs((prev) => prev.filter((t) => t.id !== id));
             setPendingContent((prev) => {
                 const next = { ...prev };
@@ -159,7 +173,13 @@ export function useTabManager() {
                 next.delete(id);
                 return next;
             });
-            deleteTabMut.mutate({ data: { id } });
+
+            if (shouldSave) {
+                hideTabMut.mutate({ data: { id } });
+            } else {
+                deleteTabMut.mutate({ data: { id } });
+            }
+
             if (addingTabRef.current === id) {
                 addingTabRef.current = null;
             }
@@ -169,7 +189,7 @@ export function useTabManager() {
                 return remaining[0]?.id ?? '';
             });
         },
-        [tabs, deleteTabMut],
+        [tabs, hideTabMut, deleteTabMut],
     );
 
     const renameTab = useCallback(
