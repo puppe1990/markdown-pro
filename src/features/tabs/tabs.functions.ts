@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getRequest } from '@tanstack/react-start/server';
+import { isSavableTab } from './isSavableTab';
 
 interface TabRow {
     id: string;
@@ -73,7 +74,9 @@ export const getAllTabs = createServerFn({ method: 'GET' }).handler(
             args: [session.user.id],
         });
 
-        return (result.rows as unknown as TabRow[]).map(tabRowToSavedTab);
+        return (result.rows as unknown as TabRow[])
+            .map(tabRowToSavedTab)
+            .filter((tab) => isSavableTab(tab));
     },
 );
 

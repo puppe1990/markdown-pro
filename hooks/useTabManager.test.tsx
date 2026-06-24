@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTabManager } from './useTabManager';
 
 const mockHideTab = vi.fn();
+const mockDeleteTab = vi.fn();
 
 vi.mock('@/src/features/tabs/useTabs', () => ({
     useTabs: () => ({ data: undefined, isLoading: false }),
@@ -11,7 +12,7 @@ vi.mock('@/src/features/tabs/useTabs', () => ({
     useCreateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
     useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
     useHideTab: () => ({ mutate: mockHideTab }),
-    useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+    useDeleteTab: () => ({ mutate: mockDeleteTab }),
 }));
 
 function createWrapper() {
@@ -27,6 +28,7 @@ describe('useTabManager', () => {
     beforeEach(() => {
         localStorage.clear();
         mockHideTab.mockClear();
+        mockDeleteTab.mockClear();
     });
 
     const loadFreshUseTabManager = async () => {
@@ -191,7 +193,7 @@ describe('useTabManager', () => {
         act(() => {
             result.current.closeTab(id);
         });
-        expect(mockHideTab).toHaveBeenCalledWith({ data: { id } });
+        expect(mockDeleteTab).toHaveBeenCalledWith({ data: { id } });
         expect(result.current.tabs).toHaveLength(0);
     });
 

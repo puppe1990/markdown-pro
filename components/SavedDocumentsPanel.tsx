@@ -12,7 +12,6 @@ import type { SavedTab } from '@/src/features/tabs/tabs.functions';
 import { filterSavedTabs } from '@/src/features/tabs/filterSavedTabs';
 import {
     btnDanger,
-    btnPrimaryCompact,
     btnSecondary,
     placeholderOnSurface,
     textOnSurface,
@@ -137,9 +136,24 @@ const SavedDocumentsPanel: React.FC<SavedDocumentsPanelProps> = ({
                             filteredTabs.map((tab) => (
                                 <div
                                     key={tab.id}
-                                    className="flex items-center justify-between gap-3 rounded-xl border border-ink-border/40 dark:border-ink-border-dark/40 px-4 py-3"
+                                    className="flex items-center gap-3 rounded-xl border border-ink-border/40 dark:border-ink-border-dark/40 overflow-hidden"
                                 >
-                                    <div className="min-w-0 flex-1">
+                                    <div
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label={`Open ${tab.name}`}
+                                        onClick={() => onOpen(tab.id)}
+                                        onKeyDown={(e) => {
+                                            if (
+                                                e.key === 'Enter' ||
+                                                e.key === ' '
+                                            ) {
+                                                e.preventDefault();
+                                                onOpen(tab.id);
+                                            }
+                                        }}
+                                        className="min-w-0 flex-1 px-4 py-3 cursor-pointer transition-colors hover:bg-surface-muted/60 dark:hover:bg-ink-800/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-inset"
+                                    >
                                         <div className="flex items-center gap-2">
                                             <p
                                                 className={`text-sm font-semibold truncate ${textOnSurface}`}
@@ -163,24 +177,16 @@ const SavedDocumentsPanel: React.FC<SavedDocumentsPanelProps> = ({
                                             {formatUpdatedAt(tab.updatedAt)}
                                         </p>
                                     </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <button
-                                            type="button"
-                                            onClick={() => onOpen(tab.id)}
-                                            className={btnPrimaryCompact}
-                                        >
-                                            Open
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setPendingDeleteId(tab.id)
-                                            }
-                                            className={btnDanger}
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        aria-label={`Delete ${tab.name}`}
+                                        onClick={() =>
+                                            setPendingDeleteId(tab.id)
+                                        }
+                                        className={`${btnDanger} shrink-0 mr-3`}
+                                    >
+                                        Delete
+                                    </button>
                                 </div>
                             ))
                         )}

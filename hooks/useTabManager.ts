@@ -5,9 +5,11 @@ import {
     useCreateTab,
     useUpdateTab,
     useHideTab,
+    useDeleteTab,
 } from '@/src/features/tabs/useTabs';
 import { useQueryClient } from '@tanstack/react-query';
 import { buildDisplayTabs } from './tab-display';
+import { isSavableTab } from '@/src/features/tabs/isSavableTab';
 
 export interface Tab {
     id: string;
@@ -30,6 +32,7 @@ export function useTabManager() {
     const createTabMut = useCreateTab();
     const updateTabMut = useUpdateTab();
     const hideTabMut = useHideTab();
+    const deleteTabMut = useDeleteTab();
     const ensuredDefaultTab = useRef(false);
     const addingTabRef = useRef<string | null>(null);
     const [pendingContent, setPendingContent] = useState<
@@ -155,6 +158,10 @@ export function useTabManager() {
 
     const closeTab = useCallback(
         (id: string) => {
+            const tabToClose = tabs.find((tab) => tab.id === id);
+            const shouldSave =
+                tabToClose !== undefined && isSavableTab(tabToClose);
+
             setLocalTabs((prev) => prev.filter((t) => t.id !== id));
             setPendingContent((prev) => {
                 const next = { ...prev };
@@ -166,7 +173,13 @@ export function useTabManager() {
                 next.delete(id);
                 return next;
             });
-            hideTabMut.mutate({ data: { id } });
+
+            if (shouldSave) {
+                hideTabMut.mutate({ data: { id } });
+            } else {
+                deleteTabMut.mutate({ data: { id } });
+            }
+
             if (addingTabRef.current === id) {
                 addingTabRef.current = null;
             }
@@ -176,7 +189,7 @@ export function useTabManager() {
                 return remaining[0]?.id ?? '';
             });
         },
-        [tabs, hideTabMut],
+        [tabs, hideTabMut, deleteTabMut],
     );
 
     const renameTab = useCallback(

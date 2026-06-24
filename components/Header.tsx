@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import {
     SettingsIcon,
     ClockIcon,
@@ -42,6 +41,7 @@ interface HeaderProps {
     accentColor: AccentColorId;
     onAccentColorChange: (accentColor: AccentColorId) => void;
     onHistoryClick: () => void;
+    onSavedDocumentsClick: () => void;
     onReadingModeToggle: () => void;
     isReadingMode: boolean;
     markdownContent: string;
@@ -59,6 +59,7 @@ const Header: React.FC<HeaderProps> = ({
     accentColor,
     onAccentColorChange,
     onHistoryClick,
+    onSavedDocumentsClick,
     onReadingModeToggle,
     isReadingMode,
     markdownContent,
@@ -69,7 +70,6 @@ const Header: React.FC<HeaderProps> = ({
     syncStatus,
     onSyncClick,
 }) => {
-    const navigate = useNavigate();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -218,10 +218,10 @@ const Header: React.FC<HeaderProps> = ({
                 </IconTooltipButton>
                 <IconTooltipButton
                     tooltip="Saved documents"
-                    onClick={() => navigate({ to: '/saved' })}
+                    onClick={onSavedDocumentsClick}
                     className={btnIcon}
                 >
-                    <FileTextIcon className="w-5 h-5" />
+                    <SaveIcon className="w-5 h-5" />
                 </IconTooltipButton>
                 <IconTooltipButton
                     tooltip="Version History"
@@ -239,53 +239,6 @@ const Header: React.FC<HeaderProps> = ({
                 >
                     <BookOpenIcon className="w-5 h-5" />
                 </IconTooltipButton>
-                <IconTooltipButton
-                    tooltip="Settings"
-                    onClick={() => setIsSettingsOpen(true)}
-                    className={btnIcon}
-                >
-                    <SettingsIcon className="w-5 h-5" />
-                </IconTooltipButton>
-                <SettingsModal
-                    isOpen={isSettingsOpen}
-                    themePreference={themePreference}
-                    onThemePreferenceChange={onThemePreferenceChange}
-                    accentColor={accentColor}
-                    onAccentColorChange={onAccentColorChange}
-                    onClose={() => setIsSettingsOpen(false)}
-                />
-                {userEmail && (
-                    <div className="relative" ref={userMenuRef}>
-                        <IconTooltipButton
-                            tooltip="User Menu"
-                            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                            className={btnIcon}
-                        >
-                            <UserIcon className="w-5 h-5" />
-                        </IconTooltipButton>
-                        {isUserMenuOpen && (
-                            <div className={`${dropdownMenu} w-60`}>
-                                <div className="px-3 py-2.5 border-b border-ink-border/40 dark:border-ink-border-dark/40 mb-1">
-                                    <p className="text-xs text-ink-faint uppercase tracking-wide font-medium">
-                                        Signed in as
-                                    </p>
-                                    <p className="text-sm text-ink dark:text-stone-200 truncate mt-0.5">
-                                        {userEmail}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        setIsUserMenuOpen(false);
-                                        onSignOut?.();
-                                    }}
-                                    className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg mx-1 transition-colors font-medium"
-                                >
-                                    Sign Out
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
                 {syncStatus && (
                     <IconTooltipButton
                         tooltip={
@@ -350,6 +303,53 @@ const Header: React.FC<HeaderProps> = ({
                         </div>
                     )}
                 </div>
+                <IconTooltipButton
+                    tooltip="Settings"
+                    onClick={() => setIsSettingsOpen(true)}
+                    className={btnIcon}
+                >
+                    <SettingsIcon className="w-5 h-5" />
+                </IconTooltipButton>
+                <SettingsModal
+                    isOpen={isSettingsOpen}
+                    themePreference={themePreference}
+                    onThemePreferenceChange={onThemePreferenceChange}
+                    accentColor={accentColor}
+                    onAccentColorChange={onAccentColorChange}
+                    onClose={() => setIsSettingsOpen(false)}
+                />
+                {userEmail && (
+                    <div className="relative" ref={userMenuRef}>
+                        <IconTooltipButton
+                            tooltip="User Menu"
+                            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                            className={btnIcon}
+                        >
+                            <UserIcon className="w-5 h-5" />
+                        </IconTooltipButton>
+                        {isUserMenuOpen && (
+                            <div className={`${dropdownMenu} w-60`}>
+                                <div className="px-3 py-2.5 border-b border-ink-border/40 dark:border-ink-border-dark/40 mb-1">
+                                    <p className="text-xs text-ink-faint uppercase tracking-wide font-medium">
+                                        Signed in as
+                                    </p>
+                                    <p className="text-sm text-ink dark:text-stone-200 truncate mt-0.5">
+                                        {userEmail}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setIsUserMenuOpen(false);
+                                        onSignOut?.();
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg mx-1 transition-colors font-medium"
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </header>
     );

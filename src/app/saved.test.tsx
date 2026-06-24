@@ -59,4 +59,21 @@ describe('SavedPage', () => {
             expect(mockNavigate).toHaveBeenCalledWith({ to: '/login' });
         });
     });
+
+    it('redirects to dashboard with saved search when session exists', async () => {
+        vi.mocked(useSession).mockReturnValue({
+            data: { user: { id: 'user-1', email: 'a@b.com' } },
+            isPending: false,
+        } as ReturnType<typeof useSession>);
+
+        renderSavedPage();
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith({
+                to: '/dashboard',
+                search: { saved: true },
+                replace: true,
+            });
+        });
+    });
 });

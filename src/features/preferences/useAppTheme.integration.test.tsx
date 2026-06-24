@@ -60,6 +60,7 @@ function ThemeSettingsHarness({
             accentColor={accentColor}
             onAccentColorChange={handleAccentChange}
             onHistoryClick={vi.fn()}
+            onSavedDocumentsClick={vi.fn()}
             onReadingModeToggle={vi.fn()}
             isReadingMode={false}
             markdownContent=""

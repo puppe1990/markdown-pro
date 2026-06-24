@@ -17,7 +17,13 @@ import { useApplyAccentColor } from '@/src/features/preferences/useApplyAccentCo
 import { Version } from '@/types';
 import { useLocalStorageMigration } from '@/src/hooks/useLocalStorageMigration';
 import { useDebouncedSync } from '@/hooks/useDebouncedSync';
-import { useUpdateTab } from '@/src/features/tabs/useTabs';
+import {
+    useAllTabs,
+    useDeleteTab,
+    useOpenTab,
+    useUpdateTab,
+} from '@/src/features/tabs/useTabs';
+import SavedDocumentsPanel from '@/components/SavedDocumentsPanel';
 import { useSaveVersion } from '@/src/features/versions/useVersions';
 import {
     appShell,
@@ -30,11 +36,13 @@ import { useAppTheme } from '@/src/features/preferences/useAppTheme';
 
 type DashboardSearch = {
     tabId?: string;
+    saved?: boolean;
 };
 
 export const Route = createFileRoute('/dashboard')({
     validateSearch: (search: Record<string, unknown>): DashboardSearch => ({
         tabId: typeof search.tabId === 'string' ? search.tabId : undefined,
+        saved: search.saved === true || search.saved === 'true',
     }),
     component: DashboardPage,
 });
@@ -42,7 +50,7 @@ export const Route = createFileRoute('/dashboard')({
 function DashboardPage() {
     const { data: session, isPending } = useSession();
     const navigate = useNavigate();
-    const { tabId } = Route.useSearch();
+    const { tabId, saved: openSavedFromUrl } = Route.useSearch();
     const { data: prefs } = usePreferences();
     const { mutate: setThemeMutate } = useSetTheme();
     const { mutate: setAccentColorMutate } = useSetAccentColor();
@@ -58,6 +66,7 @@ function DashboardPage() {
     useApplyAccentColor({ accentColor, colorScheme });
 
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
+    const [isSavedPanelOpen, setIsSavedPanelOpen] = useState(false);
     const [isReadingMode, setIsReadingMode] = useState(false);
     const [activeView, setActiveView] = useState<'editor' | 'preview'>(
         'editor',
@@ -79,6 +88,9 @@ function DashboardPage() {
 
     const updateTabMut = useUpdateTab();
     const saveVersionMut = useSaveVersion();
+    const { data: savedTabs = [] } = useAllTabs();
+    const openTabMut = useOpenTab();
+    const deleteTabMut = useDeleteTab();
 
     const markdown = activeTab?.content ?? '';
     const activeTabName = activeTab?.name ?? 'Untitled';
@@ -129,9 +141,48 @@ function DashboardPage() {
         }
         if (tabs.some((tab) => tab.id === tabId)) {
             setActiveTabId(tabId);
+            navigate({
+                to: '/dashboard',
+                search: openSavedFromUrl ? { saved: true } : {},
+                replace: true,
+            });
+        }
+    }, [tabId, tabs, tabsLoading, setActiveTabId, navigate, openSavedFromUrl]);
+
+    useEffect(() => {
+        if (openSavedFromUrl) {
+            setIsSavedPanelOpen(true);
+        }
+    }, [openSavedFromUrl]);
+
+    const closeSavedPanel = useCallback(() => {
+        setIsSavedPanelOpen(false);
+        if (openSavedFromUrl) {
             navigate({ to: '/dashboard', search: {}, replace: true });
         }
-    }, [tabId, tabs, tabsLoading, setActiveTabId, navigate]);
+    }, [navigate, openSavedFromUrl]);
+
+    const handleOpenSavedDocument = useCallback(
+        (id: string) => {
+            openTabMut.mutate(
+                { data: { id } },
+                {
+                    onSuccess: () => {
+                        setActiveTabId(id);
+                        closeSavedPanel();
+                    },
+                },
+            );
+        },
+        [openTabMut, setActiveTabId, closeSavedPanel],
+    );
+
+    const handleDeleteSavedDocument = useCallback(
+        (id: string) => {
+            deleteTabMut.mutate({ data: { id } });
+        },
+        [deleteTabMut],
+    );
 
     const handleRevert = useCallback(
         (version: Version) => {
@@ -161,6 +212,7 @@ function DashboardPage() {
                     setAccentColorMutate({ data: { accentColor: next } })
                 }
                 onHistoryClick={() => setIsHistoryPanelOpen(true)}
+                onSavedDocumentsClick={() => setIsSavedPanelOpen(true)}
                 onReadingModeToggle={() => setIsReadingMode(!isReadingMode)}
                 isReadingMode={isReadingMode}
                 markdownContent={markdown}
@@ -191,7 +243,7 @@ function DashboardPage() {
                         </p>
                         <button
                             type="button"
-                            onClick={() => navigate({ to: '/saved' })}
+                            onClick={() => setIsSavedPanelOpen(true)}
                             className="inline-flex items-center justify-center rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-hover"
                         >
                             Open saved documents
@@ -246,6 +298,14 @@ function DashboardPage() {
                 versions={versions}
                 onRevert={handleRevert}
             />
+            {isSavedPanelOpen && (
+                <SavedDocumentsPanel
+                    tabs={savedTabs}
+                    onClose={closeSavedPanel}
+                    onOpen={handleOpenSavedDocument}
+                    onDelete={handleDeleteSavedDocument}
+                />
+            )}
         </div>
     );
 }

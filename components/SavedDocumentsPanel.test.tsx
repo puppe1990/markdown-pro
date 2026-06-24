@@ -49,7 +49,7 @@ describe('SavedDocumentsPanel', () => {
         expect(screen.queryByText('Meeting Notes')).not.toBeInTheDocument();
     });
 
-    it('calls onOpen when Open is clicked', async () => {
+    it('calls onOpen when the document row is clicked', async () => {
         render(
             <SavedDocumentsPanel
                 tabs={savedTabs}
@@ -59,8 +59,9 @@ describe('SavedDocumentsPanel', () => {
             />,
         );
 
-        const openButtons = screen.getAllByRole('button', { name: /^open$/i });
-        await userEvent.click(openButtons[1]);
+        await userEvent.click(
+            screen.getByRole('button', { name: /open draft/i }),
+        );
 
         expect(onOpen).toHaveBeenCalledWith('tab-2');
     });
@@ -75,10 +76,9 @@ describe('SavedDocumentsPanel', () => {
             />,
         );
 
-        const deleteButtons = screen.getAllByRole('button', {
-            name: /^delete$/i,
-        });
-        await userEvent.click(deleteButtons[0]);
+        await userEvent.click(
+            screen.getByRole('button', { name: /delete meeting notes/i }),
+        );
 
         expect(
             screen.getByText(/delete this document permanently/i),
