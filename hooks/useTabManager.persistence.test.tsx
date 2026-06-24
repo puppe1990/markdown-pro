@@ -5,7 +5,7 @@ import type { Tab } from '@/src/features/tabs/tabs.functions';
 
 const mockCreateTab = vi.fn();
 const mockUpdateTab = vi.fn();
-const mockDeleteTab = vi.fn();
+const mockHideTab = vi.fn();
 
 type CreateVars = { data: { id: string; name?: string } };
 
@@ -47,9 +47,11 @@ function makeCreateMut(): MutResult {
 
 vi.mock('@/src/features/tabs/useTabs', () => ({
     useTabs: () => remoteTabsState,
+    useAllTabs: () => ({ data: undefined, isLoading: false }),
     useCreateTab: () => makeCreateMut(),
     useUpdateTab: () => ({ mutate: mockUpdateTab, mutateAsync: vi.fn() }),
-    useDeleteTab: () => ({ mutate: mockDeleteTab, mutateAsync: vi.fn() }),
+    useHideTab: () => ({ mutate: mockHideTab, mutateAsync: vi.fn() }),
+    useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
 }));
 
 import { useTabManager } from './useTabManager';
@@ -68,7 +70,7 @@ describe('useTabManager persistence', () => {
         localStorage.clear();
         mockCreateTab.mockReset();
         mockUpdateTab.mockReset();
-        mockDeleteTab.mockReset();
+        mockHideTab.mockReset();
         remoteTabsState = { data: undefined, isLoading: true };
         createMutState = { isPending: false, variables: undefined };
     });

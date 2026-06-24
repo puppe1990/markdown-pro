@@ -79,6 +79,7 @@ export async function runPendingMigrations(db: Client): Promise<void> {
 
     await migratePreferencesThemeSystem(db);
     await migratePreferencesAccentColor(db);
+    await migrateTabsIsOpen(db);
 }
 
 export async function migrateAppSchema(db: Client): Promise<void> {
@@ -97,6 +98,52 @@ export async function migrateAppSchema(db: Client): Promise<void> {
     }
 
     await runPendingMigrations(db);
+}
+
+const TABS_IS_OPEN_MIGRATION_ID = 'tabs-is-open';
+
+async function migrateTabsIsOpen(db: Client): Promise<void> {
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS app_migrations (
+            id TEXT PRIMARY KEY,
+            applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    `);
+
+    const applied = await db.execute({
+        sql: 'SELECT id FROM app_migrations WHERE id = ?',
+        args: [TABS_IS_OPEN_MIGRATION_ID],
+    });
+    if (applied.rows.length > 0) {
+        return;
+    }
+
+    const tableRow = await db.execute({
+        sql: "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tabs'",
+    });
+    if (tableRow.rows.length === 0) {
+        await db.execute({
+            sql: 'INSERT INTO app_migrations (id) VALUES (?)',
+            args: [TABS_IS_OPEN_MIGRATION_ID],
+        });
+        return;
+    }
+
+    const columns = await db.execute('PRAGMA table_info(tabs)');
+    const hasIsOpenColumn = columns.rows.some(
+        (row) => String((row as { name: string }).name) === 'is_open',
+    );
+    if (!hasIsOpenColumn) {
+        await db.execute(`
+            ALTER TABLE tabs
+            ADD COLUMN is_open INTEGER NOT NULL DEFAULT 1
+        `);
+    }
+
+    await db.execute({
+        sql: 'INSERT INTO app_migrations (id) VALUES (?)',
+        args: [TABS_IS_OPEN_MIGRATION_ID],
+    });
 }
 
 const ACCENT_COLOR_MIGRATION_ID = 'preferences-accent-color';

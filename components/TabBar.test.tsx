@@ -92,7 +92,7 @@ describe('TabBar', () => {
         expect(onAdd).toHaveBeenCalled();
     });
 
-    it('shows confirm modal when closing a tab with content', async () => {
+    it('closes tab immediately even when it has content', async () => {
         const onClose = vi.fn();
 
         render(
@@ -110,83 +110,12 @@ describe('TabBar', () => {
         });
         await userEvent.click(closeButtons[0]);
 
+        expect(onClose).toHaveBeenCalledWith('1');
         expect(
-            screen.getByText(
+            screen.queryByText(
                 'This tab has content. Are you sure you want to close it?',
             ),
-        ).toBeInTheDocument();
-        expect(onClose).not.toHaveBeenCalled();
-    });
-
-    it('closes tab when confirming in modal', async () => {
-        const onClose = vi.fn();
-
-        render(
-            <TabBar
-                tabs={tabs}
-                activeTabId="1"
-                onSelect={vi.fn()}
-                onAdd={vi.fn()}
-                onClose={onClose}
-                onRename={vi.fn()}
-            />,
-        );
-        const closeButtons = screen.getAllByRole('button', {
-            name: /close tab/i,
-        });
-        await userEvent.click(closeButtons[0]);
-
-        await userEvent.click(screen.getByText('OK'));
-        expect(onClose).toHaveBeenCalledWith('1');
-    });
-
-    it('does not close tab when cancelling in modal', async () => {
-        const onClose = vi.fn();
-
-        render(
-            <TabBar
-                tabs={tabs}
-                activeTabId="1"
-                onSelect={vi.fn()}
-                onAdd={vi.fn()}
-                onClose={onClose}
-                onRename={vi.fn()}
-            />,
-        );
-        const closeButtons = screen.getAllByRole('button', {
-            name: /close tab/i,
-        });
-        await userEvent.click(closeButtons[0]);
-
-        await userEvent.click(screen.getByText('Cancel'));
-        expect(onClose).not.toHaveBeenCalled();
-    });
-
-    it('closes without confirmation when tab is empty', async () => {
-        const onClose = vi.fn();
-        const emptyTabs: Tab[] = [
-            { id: '1', name: 'Notes', content: '' },
-            { id: '2', name: 'Draft', content: '# Draft' },
-        ];
-
-        render(
-            <TabBar
-                tabs={emptyTabs}
-                activeTabId="1"
-                onSelect={vi.fn()}
-                onAdd={vi.fn()}
-                onClose={onClose}
-                onRename={vi.fn()}
-            />,
-        );
-
-        const closeButtons = screen.getAllByRole('button', {
-            name: /close tab/i,
-        });
-
-        await userEvent.click(closeButtons[0]);
-
-        expect(onClose).toHaveBeenCalledWith('1');
+        ).not.toBeInTheDocument();
     });
 
     it('enters rename mode on double-click and calls onRename on blur', async () => {

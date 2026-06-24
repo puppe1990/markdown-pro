@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import {
     SettingsIcon,
     ClockIcon,
@@ -68,6 +69,7 @@ const Header: React.FC<HeaderProps> = ({
     syncStatus,
     onSyncClick,
 }) => {
+    const navigate = useNavigate();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -213,6 +215,13 @@ const Header: React.FC<HeaderProps> = ({
                     ) : (
                         <CopyIcon className="w-5 h-5" />
                     )}
+                </IconTooltipButton>
+                <IconTooltipButton
+                    tooltip="Saved documents"
+                    onClick={() => navigate({ to: '/saved' })}
+                    className={btnIcon}
+                >
+                    <FileTextIcon className="w-5 h-5" />
                 </IconTooltipButton>
                 <IconTooltipButton
                     tooltip="Version History"

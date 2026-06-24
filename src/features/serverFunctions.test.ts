@@ -7,6 +7,9 @@ describe('server function definitions', () => {
         expect(typeof tabs.createTab).toBe('function');
         expect(typeof tabs.updateTab).toBe('function');
         expect(typeof tabs.deleteTab).toBe('function');
+        expect(typeof tabs.getAllTabs).toBe('function');
+        expect(typeof tabs.hideTab).toBe('function');
+        expect(typeof tabs.openTab).toBe('function');
     });
 
     it('loads versions server functions without deprecated validator API', async () => {

@@ -7,14 +7,15 @@ const mockGetTabs = vi.fn<() => Promise<Tab[]>>();
 const mockCreateTab =
     vi.fn<(vars: { data: { id: string; name?: string } }) => Promise<Tab>>();
 const mockUpdateTab = vi.fn();
-const mockDeleteTab = vi.fn();
-
 vi.mock('@/src/features/tabs/tabs.functions', () => ({
     getTabs: () => mockGetTabs(),
+    getAllTabs: vi.fn().mockResolvedValue([]),
     createTab: (vars: { data: { id: string; name?: string } }) =>
         mockCreateTab(vars),
     updateTab: (...args: unknown[]) => mockUpdateTab(...args),
-    deleteTab: (...args: unknown[]) => mockDeleteTab(...args),
+    hideTab: vi.fn(),
+    openTab: vi.fn(),
+    deleteTab: vi.fn(),
 }));
 
 import { useTabManager } from './useTabManager';
@@ -25,7 +26,6 @@ describe('useTabManager typing regression', () => {
         mockGetTabs.mockReset();
         mockCreateTab.mockReset();
         mockUpdateTab.mockReset();
-        mockDeleteTab.mockReset();
     });
 
     it('keeps typed content when remote tabs finish loading after user starts writing', async () => {

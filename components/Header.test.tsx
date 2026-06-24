@@ -3,6 +3,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Header from './Header';
 
+const mockNavigate = vi.fn();
+
+vi.mock('@tanstack/react-router', () => ({
+    useNavigate: () => mockNavigate,
+}));
+
 vi.mock('../services/exportService', () => ({
     exportAsMarkdown: vi.fn(),
     exportAsPdf: vi.fn(),
