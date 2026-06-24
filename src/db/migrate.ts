@@ -71,12 +71,12 @@ async function migratePreferencesThemeSystem(db: Client): Promise<void> {
     });
 }
 
-/** Runs incremental migrations (safe to call on every DB access). */
+/**
+ * Runs incremental migrations (safe to call on every DB access).
+ * Runs on remote Turso too — only migrateAppSchema skips remote (schema.sql
+ * is not bundled on Netlify).
+ */
 export async function runPendingMigrations(db: Client): Promise<void> {
-    if (isRemoteDatabase(resolveDatabaseConfig())) {
-        return;
-    }
-
     await migratePreferencesThemeSystem(db);
     await migratePreferencesAccentColor(db);
     await migrateTabsIsOpen(db);
