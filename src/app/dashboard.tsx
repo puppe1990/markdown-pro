@@ -65,6 +65,7 @@ function DashboardPage() {
         renameTab,
         updateTabContent,
         updateTabContentLocal,
+        acknowledgeTabContentSynced,
     } = useTabManager();
 
     const updateTabMut = useUpdateTab();
@@ -83,9 +84,10 @@ function DashboardPage() {
     const syncToServer = useCallback(
         async (id: string, content: string) => {
             await updateTabMut.mutateAsync({ data: { id, content } });
+            acknowledgeTabContentSynced(id);
             saveVersionMut.mutate({ data: { tabId: id, content } });
         },
-        [updateTabMut, saveVersionMut],
+        [updateTabMut, saveVersionMut, acknowledgeTabContentSynced],
     );
 
     const { syncStatus, syncNow } = useDebouncedSync(

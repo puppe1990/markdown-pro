@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
     useTabs,
     useCreateTab,
@@ -6,6 +6,7 @@ import {
     useDeleteTab,
 } from '@/src/features/tabs/useTabs';
 import { useQueryClient } from '@tanstack/react-query';
+import { buildDisplayTabs } from './tab-display';
 
 export interface Tab {
     id: string;
@@ -23,12 +24,18 @@ const defaultTab = (): Tab => ({ id: newId(), name: 'Untitled', content: '' });
 
 export function useTabManager() {
     const qc = useQueryClient();
-    const { data: remoteTabs, isLoading } = useTabs();
+    const { data: queryTabs, isLoading } = useTabs();
     const createTabMut = useCreateTab();
     const updateTabMut = useUpdateTab();
     const deleteTabMut = useDeleteTab();
     const ensuredDefaultTab = useRef(false);
     const addingTabRef = useRef<string | null>(null);
+    const [pendingContent, setPendingContent] = useState<
+        Record<string, string>
+    >({});
+    const [stagedTabIds, setStagedTabIds] = useState<Set<string>>(
+        () => new Set(),
+    );
 
     const [localTabs, setLocalTabs] = useState<Tab[]>(() => {
         if (typeof window === 'undefined') return [defaultTab()];
@@ -51,12 +58,21 @@ export function useTabManager() {
         return stored || (localTabs[0]?.id ?? '');
     });
 
-    const tabs = remoteTabs === undefined ? localTabs : remoteTabs;
+    const tabs = useMemo(
+        () =>
+            buildDisplayTabs(
+                queryTabs,
+                localTabs,
+                pendingContent,
+                stagedTabIds,
+            ),
+        [queryTabs, localTabs, pendingContent, stagedTabIds],
+    );
 
     useEffect(() => {
-        if (isLoading || remoteTabs === undefined) return;
+        if (isLoading || queryTabs === undefined) return;
 
-        if (remoteTabs.length === 0) {
+        if (queryTabs.length === 0) {
             if (!ensuredDefaultTab.current) {
                 ensuredDefaultTab.current = true;
                 const id = newId();
@@ -67,11 +83,19 @@ export function useTabManager() {
         }
 
         if (addingTabRef.current) {
-            const isInRemote = remoteTabs.some(
+            const isInRemote = queryTabs.some(
                 (t) => t.id === addingTabRef.current,
             );
             if (isInRemote) {
+                const stagedId = addingTabRef.current;
                 addingTabRef.current = null;
+                if (stagedId) {
+                    setStagedTabIds((prev) => {
+                        const next = new Set(prev);
+                        next.delete(stagedId);
+                        return next;
+                    });
+                }
             } else {
                 const pendingId = createTabMut.isPending
                     ? (
@@ -91,11 +115,11 @@ export function useTabManager() {
                 return prev;
             }
             addingTabRef.current = null;
-            return remoteTabs.some((t) => t.id === prev)
+            return queryTabs.some((t) => t.id === prev)
                 ? prev
-                : remoteTabs[0].id;
+                : queryTabs[0].id;
         });
-    }, [remoteTabs, isLoading, createTabMut]);
+    }, [queryTabs, isLoading, createTabMut]);
 
     const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
@@ -113,21 +137,28 @@ export function useTabManager() {
         const id = newId();
         const name =
             tabs.length === 0 ? 'Untitled' : `Untitled ${tabs.length + 1}`;
+        const newTab: Tab = { id, name, content: '' };
         addingTabRef.current = id;
-        if (remoteTabs === undefined) {
-            const newTab: Tab = { id, name, content: '' };
-            setLocalTabs((prev) => [...prev, newTab]);
-        }
+        setStagedTabIds((prev) => new Set(prev).add(id));
+        setLocalTabs((prev) => [...prev, newTab]);
         setActiveTabIdState(id);
         createTabMut.mutate({ data: { id, name } });
-    }, [tabs.length, createTabMut, remoteTabs]);
+    }, [tabs.length, createTabMut]);
 
     const closeTab = useCallback(
         (id: string) => {
             if (tabs.length === 1) return;
-            if (remoteTabs === undefined) {
-                setLocalTabs((prev) => prev.filter((t) => t.id !== id));
-            }
+            setLocalTabs((prev) => prev.filter((t) => t.id !== id));
+            setPendingContent((prev) => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+            setStagedTabIds((prev) => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
             deleteTabMut.mutate({ data: { id } });
             if (addingTabRef.current === id) {
                 addingTabRef.current = null;
@@ -138,44 +169,78 @@ export function useTabManager() {
                 return remaining[0]?.id ?? '';
             });
         },
-        [tabs, deleteTabMut, remoteTabs],
+        [tabs, deleteTabMut],
     );
 
     const renameTab = useCallback(
         (id: string, name: string) => {
-            if (remoteTabs === undefined) {
-                setLocalTabs((prev) =>
-                    prev.map((t) => (t.id === id ? { ...t, name } : t)),
-                );
-            }
+            setLocalTabs((prev) =>
+                prev.map((t) => (t.id === id ? { ...t, name } : t)),
+            );
             updateTabMut.mutate({ data: { id, name } });
         },
-        [updateTabMut, remoteTabs],
+        [updateTabMut],
     );
 
     const updateTabContent = useCallback(
         (id: string, content: string) => {
-            if (remoteTabs === undefined) {
-                setLocalTabs((prev) =>
-                    prev.map((t) => (t.id === id ? { ...t, content } : t)),
-                );
-            }
+            setLocalTabs((prev) =>
+                prev.map((t) => (t.id === id ? { ...t, content } : t)),
+            );
             updateTabMut.mutate({ data: { id, content } });
         },
-        [updateTabMut, remoteTabs],
+        [updateTabMut],
     );
 
     const updateTabContentLocal = useCallback(
         (id: string, content: string) => {
-            qc.setQueryData<Tab[]>(['tabs'], (old) =>
-                old?.map((t) => (t.id === id ? { ...t, content } : t)),
-            );
-            setLocalTabs((prev) =>
-                prev.map((t) => (t.id === id ? { ...t, content } : t)),
-            );
+            setPendingContent((prev) => ({ ...prev, [id]: content }));
+            qc.setQueryData<Tab[]>(['tabs'], (old) => {
+                const base = old ?? [];
+                if (!base.some((tab) => tab.id === id)) {
+                    const localTab = localTabs.find((tab) => tab.id === id);
+                    return [
+                        ...base,
+                        {
+                            id,
+                            name: localTab?.name ?? 'Untitled',
+                            content,
+                        },
+                    ];
+                }
+                return base.map((tab) =>
+                    tab.id === id ? { ...tab, content } : tab,
+                );
+            });
+            setLocalTabs((prev) => {
+                if (prev.some((tab) => tab.id === id)) {
+                    return prev.map((tab) =>
+                        tab.id === id ? { ...tab, content } : tab,
+                    );
+                }
+                const cached = qc
+                    .getQueryData<Tab[]>(['tabs'])
+                    ?.find((tab) => tab.id === id);
+                return [
+                    ...prev,
+                    {
+                        id,
+                        name: cached?.name ?? 'Untitled',
+                        content,
+                    },
+                ];
+            });
         },
-        [qc],
+        [qc, localTabs],
     );
+
+    const acknowledgeTabContentSynced = useCallback((id: string) => {
+        setPendingContent((prev) => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
+    }, []);
 
     return {
         tabs,
@@ -188,5 +253,6 @@ export function useTabManager() {
         renameTab,
         updateTabContent,
         updateTabContentLocal,
+        acknowledgeTabContentSynced,
     };
 }
