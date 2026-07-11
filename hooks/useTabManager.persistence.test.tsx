@@ -52,6 +52,7 @@ vi.mock('@/src/features/tabs/useTabs', () => ({
     useUpdateTab: () => ({ mutate: mockUpdateTab, mutateAsync: vi.fn() }),
     useHideTab: () => ({ mutate: mockHideTab, mutateAsync: vi.fn() }),
     useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+    useOpenTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
 }));
 
 import { useTabManager } from './useTabManager';

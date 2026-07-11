@@ -13,6 +13,7 @@ vi.mock('@/src/features/tabs/useTabs', () => ({
     useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
     useHideTab: () => ({ mutate: mockHideTab }),
     useDeleteTab: () => ({ mutate: mockDeleteTab }),
+    useOpenTab: () => ({ mutate: vi.fn() }),
 }));
 
 function createWrapper() {
@@ -329,6 +330,7 @@ describe('useTabManager', () => {
             useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
             useHideTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
             useDeleteTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+            useOpenTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
         }));
 
         const freshUseTabManager = await loadFreshUseTabManager();

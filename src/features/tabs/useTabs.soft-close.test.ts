@@ -28,6 +28,25 @@ describe('useHideTab', () => {
                 { id: 'open-2', name: 'B', content: '# text' },
             ],
         );
+        qc.setQueryData(
+            ['tabs', 'all'],
+            [
+                {
+                    id: 'open-1',
+                    name: 'A',
+                    content: '',
+                    isOpen: true,
+                    updatedAt: '2026-01-01',
+                },
+                {
+                    id: 'open-2',
+                    name: 'B',
+                    content: '# text',
+                    isOpen: true,
+                    updatedAt: '2026-01-01',
+                },
+            ],
+        );
 
         const { result } = renderHook(() => useHideTab(), { wrapper: Wrapper });
 
@@ -37,6 +56,13 @@ describe('useHideTab', () => {
             const cached = qc.getQueryData(['tabs']) as Array<{ id: string }>;
             expect(cached).toHaveLength(1);
             expect(cached[0]?.id).toBe('open-2');
+            const allCached = qc.getQueryData(['tabs', 'all']) as Array<{
+                id: string;
+                isOpen: boolean;
+            }>;
+            expect(allCached.find((tab) => tab.id === 'open-1')?.isOpen).toBe(
+                false,
+            );
         });
     });
 });
@@ -74,6 +100,13 @@ describe('useOpenTab', () => {
                 name: 'Note',
                 content: '# Hi',
             });
+            const allCached = qc.getQueryData(['tabs', 'all']) as Array<{
+                id: string;
+                isOpen: boolean;
+            }>;
+            expect(allCached.find((tab) => tab.id === 'closed-1')?.isOpen).toBe(
+                true,
+            );
         });
     });
 });

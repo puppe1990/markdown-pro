@@ -6,7 +6,9 @@ import {
     useUpdateTab,
     useHideTab,
     useDeleteTab,
+    useOpenTab,
 } from '@/src/features/tabs/useTabs';
+
 import { useQueryClient } from '@tanstack/react-query';
 import { buildDisplayTabs } from './tab-display';
 import { isSavableTab } from '@/src/features/tabs/isSavableTab';
@@ -33,8 +35,10 @@ export function useTabManager() {
     const updateTabMut = useUpdateTab();
     const hideTabMut = useHideTab();
     const deleteTabMut = useDeleteTab();
+    const openTabMut = useOpenTab();
     const ensuredDefaultTab = useRef(false);
     const addingTabRef = useRef<string | null>(null);
+    const reopeningTabRef = useRef<string | null>(null);
     const [pendingContent, setPendingContent] = useState<
         Record<string, string>
     >({});
@@ -121,8 +125,20 @@ export function useTabManager() {
             }
         }
 
+        if (reopeningTabRef.current) {
+            const isInRemote = queryTabs.some(
+                (t) => t.id === reopeningTabRef.current,
+            );
+            if (isInRemote) {
+                reopeningTabRef.current = null;
+            }
+        }
+
         setActiveTabIdState((prev) => {
             if (addingTabRef.current === prev) {
+                return prev;
+            }
+            if (reopeningTabRef.current === prev) {
                 return prev;
             }
             addingTabRef.current = null;
@@ -262,6 +278,28 @@ export function useTabManager() {
         });
     }, []);
 
+    const openSavedDocument = useCallback(
+        (id: string) => {
+            const saved = allTabs?.find((tab) => tab.id === id);
+            if (!saved) {
+                return;
+            }
+
+            reopeningTabRef.current = id;
+            setActiveTabIdState(id);
+
+            const isInOpenTabs =
+                queryTabs?.some((tab) => tab.id === id) ?? false;
+            if (!isInOpenTabs) {
+                openTabMut.mutate({ data: { id } });
+                return;
+            }
+
+            reopeningTabRef.current = null;
+        },
+        [allTabs, queryTabs, openTabMut],
+    );
+
     return {
         tabs,
         activeTabId,
@@ -274,5 +312,6 @@ export function useTabManager() {
         updateTabContent,
         updateTabContentLocal,
         acknowledgeTabContentSynced,
+        openSavedDocument,
     };
 }

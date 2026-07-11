@@ -13,6 +13,7 @@ vi.mock('@/src/features/tabs/useTabs', () => ({
     useUpdateTab: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
     useHideTab: () => ({ mutate: mockHideTab }),
     useDeleteTab: () => ({ mutate: mockDeleteTab }),
+    useOpenTab: () => ({ mutate: vi.fn() }),
 }));
 
 function createWrapper() {

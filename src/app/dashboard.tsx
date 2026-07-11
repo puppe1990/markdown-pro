@@ -20,7 +20,6 @@ import { useDebouncedSync } from '@/hooks/useDebouncedSync';
 import {
     useAllTabs,
     useDeleteTab,
-    useOpenTab,
     useUpdateTab,
 } from '@/src/features/tabs/useTabs';
 import SavedDocumentsPanel from '@/components/SavedDocumentsPanel';
@@ -84,12 +83,12 @@ function DashboardPage() {
         updateTabContent,
         updateTabContentLocal,
         acknowledgeTabContentSynced,
+        openSavedDocument,
     } = useTabManager();
 
     const updateTabMut = useUpdateTab();
     const saveVersionMut = useSaveVersion();
     const { data: savedTabs = [] } = useAllTabs();
-    const openTabMut = useOpenTab();
     const deleteTabMut = useDeleteTab();
 
     const markdown = activeTab?.content ?? '';
@@ -164,17 +163,10 @@ function DashboardPage() {
 
     const handleOpenSavedDocument = useCallback(
         (id: string) => {
-            openTabMut.mutate(
-                { data: { id } },
-                {
-                    onSuccess: () => {
-                        setActiveTabId(id);
-                        closeSavedPanel();
-                    },
-                },
-            );
+            closeSavedPanel();
+            openSavedDocument(id);
         },
-        [openTabMut, setActiveTabId, closeSavedPanel],
+        [closeSavedPanel, openSavedDocument],
     );
 
     const handleDeleteSavedDocument = useCallback(

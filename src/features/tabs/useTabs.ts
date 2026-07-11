@@ -90,10 +90,20 @@ export function useUpdateTab() {
  * Mutation to hide a tab from the dashboard without deleting its content.
  */
 export function useHideTab() {
+    const qc = useQueryClient();
+
     return useOptimisticMutation<TabVariables>(hideTab, {
         queryKey: ['tabs'],
-        updater: (old, input) =>
-            (old as Tab[] | undefined)?.filter((t) => t.id !== input.data.id),
+        updater: (old, input) => {
+            qc.setQueryData<SavedTab[]>(['tabs', 'all'], (allOld) =>
+                allOld?.map((tab) =>
+                    tab.id === input.data.id ? { ...tab, isOpen: false } : tab,
+                ),
+            );
+            return (old as Tab[] | undefined)?.filter(
+                (t) => t.id !== input.data.id,
+            );
+        },
     });
 }
 
@@ -111,6 +121,11 @@ export function useOpenTab() {
             if (!saved) {
                 return old as Tab[] | undefined;
             }
+            qc.setQueryData<SavedTab[]>(['tabs', 'all'], (allOld) =>
+                allOld?.map((tab) =>
+                    tab.id === input.data.id ? { ...tab, isOpen: true } : tab,
+                ),
+            );
             return [
                 ...((old as Tab[] | undefined) ?? []),
                 {
