@@ -17,6 +17,7 @@ import { useApplyAccentColor } from '@/src/features/preferences/useApplyAccentCo
 import { Version } from '@/types';
 import { useLocalStorageMigration } from '@/src/hooks/useLocalStorageMigration';
 import { useDebouncedSync } from '@/hooks/useDebouncedSync';
+import { useUndoStack } from '@/hooks/useUndoStack';
 import {
     useAllTabs,
     useDeleteTab,
@@ -101,6 +102,8 @@ function DashboardPage() {
         activeTabId,
     );
 
+    const { recordChange, undo, canUndo } = useUndoStack(activeTabId);
+
     const syncToServer = useCallback(
         async (id: string, content: string) => {
             await updateTabMut.mutateAsync({ data: { id, content } });
@@ -119,11 +122,28 @@ function DashboardPage() {
 
     const handleSetMarkdown = useCallback(
         (newContent: string) => {
+            if (activeTabId) {
+                recordChange(activeTabId, markdown, newContent);
+            }
             updateTabContentLocal(activeTabId, newContent);
             addLocalVersion(newContent);
         },
-        [activeTabId, updateTabContentLocal, addLocalVersion],
+        [
+            activeTabId,
+            markdown,
+            recordChange,
+            updateTabContentLocal,
+            addLocalVersion,
+        ],
     );
+
+    const handleUndo = useCallback(() => {
+        if (!activeTabId) return;
+        const previous = undo(activeTabId);
+        if (previous === null) return;
+        updateTabContentLocal(activeTabId, previous);
+        addLocalVersion(previous);
+    }, [activeTabId, undo, updateTabContentLocal, addLocalVersion]);
 
     useLocalStorageMigration();
 
@@ -178,10 +198,13 @@ function DashboardPage() {
 
     const handleRevert = useCallback(
         (version: Version) => {
+            if (activeTabId) {
+                recordChange(activeTabId, markdown, version.content);
+            }
             updateTabContent(activeTabId, version.content);
             setIsHistoryPanelOpen(false);
         },
-        [activeTabId, updateTabContent],
+        [activeTabId, markdown, recordChange, updateTabContent],
     );
 
     if (isPending) {
@@ -210,6 +233,9 @@ function DashboardPage() {
                 markdownContent={markdown}
                 tabName={activeTabName}
                 onImportMarkdown={(content) => {
+                    if (activeTabId) {
+                        recordChange(activeTabId, markdown, content);
+                    }
                     updateTabContent(activeTabId, content);
                     saveVersion(content);
                 }}
@@ -217,6 +243,8 @@ function DashboardPage() {
                 onSignOut={() => signOut()}
                 syncStatus={syncStatus}
                 onSyncClick={() => syncNow()}
+                onUndo={handleUndo}
+                canUndo={canUndo}
             />
             <TabBar
                 tabs={tabs}

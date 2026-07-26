@@ -186,4 +186,70 @@ describe('Header', () => {
 
         expect(onThemePreferenceChange).toHaveBeenCalledWith('dark');
     });
+
+    it('does not show undo button when onUndo is not provided', () => {
+        render(
+            <Header
+                themePreference="light"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
+                onHistoryClick={vi.fn()}
+                onSavedDocumentsClick={vi.fn()}
+                onReadingModeToggle={vi.fn()}
+                isReadingMode={false}
+                markdownContent=""
+                onImportMarkdown={vi.fn()}
+            />,
+        );
+
+        expect(
+            screen.queryByRole('button', { name: 'Undo' }),
+        ).not.toBeInTheDocument();
+    });
+
+    it('shows disabled undo button when canUndo is false', () => {
+        render(
+            <Header
+                themePreference="light"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
+                onHistoryClick={vi.fn()}
+                onSavedDocumentsClick={vi.fn()}
+                onReadingModeToggle={vi.fn()}
+                isReadingMode={false}
+                markdownContent=""
+                onImportMarkdown={vi.fn()}
+                onUndo={vi.fn()}
+                canUndo={false}
+            />,
+        );
+
+        expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+    });
+
+    it('calls onUndo when undo button is clicked and canUndo is true', async () => {
+        const onUndo = vi.fn();
+
+        render(
+            <Header
+                themePreference="light"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
+                onHistoryClick={vi.fn()}
+                onSavedDocumentsClick={vi.fn()}
+                onReadingModeToggle={vi.fn()}
+                isReadingMode={false}
+                markdownContent=""
+                onImportMarkdown={vi.fn()}
+                onUndo={onUndo}
+                canUndo={true}
+            />,
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+        expect(onUndo).toHaveBeenCalledTimes(1);
+    });
 });

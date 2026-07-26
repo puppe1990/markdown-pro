@@ -13,6 +13,7 @@ import {
     UserIcon,
     SaveIcon,
     SpinnerIcon,
+    UndoIcon,
 } from './icons';
 import { BrandMark } from './BrandMark';
 import { IconTooltipButton } from './IconTooltipButton';
@@ -51,6 +52,8 @@ interface HeaderProps {
     onSignOut?: () => void;
     syncStatus?: SyncStatus;
     onSyncClick?: () => void;
+    onUndo?: () => void;
+    canUndo?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -69,6 +72,8 @@ const Header: React.FC<HeaderProps> = ({
     onSignOut,
     syncStatus,
     onSyncClick,
+    onUndo,
+    canUndo = false,
 }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -186,6 +191,16 @@ const Header: React.FC<HeaderProps> = ({
         >
             <BrandMark size="sm" />
             <div className="flex items-center gap-1">
+                {onUndo && (
+                    <IconTooltipButton
+                        tooltip="Undo"
+                        onClick={onUndo}
+                        disabled={!canUndo}
+                        className={`${btnIcon} disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-muted dark:disabled:hover:text-stone-400`}
+                    >
+                        <UndoIcon className="w-5 h-5" />
+                    </IconTooltipButton>
+                )}
                 <IconTooltipButton
                     tooltip="Import Markdown"
                     onClick={() => importInputRef.current?.click()}
