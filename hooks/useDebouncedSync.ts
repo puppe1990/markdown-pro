@@ -49,7 +49,12 @@ export function useDebouncedSync(
             setSyncStatus('saving');
             try {
                 await onSyncRef.current(tabId, syncContent);
-                setSyncStatus('saved');
+                // If the user kept typing while this sync was in flight, stay
+                // pending so the debounce re-syncs the newer content instead of
+                // reporting "saved" and cancelling the scheduled sync.
+                setSyncStatus(
+                    contentRef.current === syncContent ? 'saved' : 'pending',
+                );
             } catch {
                 setSyncStatus('error');
             } finally {
