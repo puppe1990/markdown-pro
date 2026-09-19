@@ -270,13 +270,24 @@ export function useTabManager() {
         [qc, localTabs],
     );
 
-    const acknowledgeTabContentSynced = useCallback((id: string) => {
-        setPendingContent((prev) => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-        });
-    }, []);
+    const acknowledgeTabContentSynced = useCallback(
+        (id: string, syncedContent?: string) => {
+            setPendingContent((prev) => {
+                const pending = prev[id];
+                if (
+                    pending !== undefined &&
+                    syncedContent !== undefined &&
+                    pending !== syncedContent
+                ) {
+                    return prev;
+                }
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+        },
+        [],
+    );
 
     const openSavedDocument = useCallback(
         (id: string) => {

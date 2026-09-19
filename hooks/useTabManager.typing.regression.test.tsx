@@ -168,4 +168,44 @@ describe('useTabManager typing regression', () => {
             expect(result.current.activeTab.content).toBe('# edited live');
         });
     });
+
+    it('keeps newer typed content when an older sync is acknowledged', async () => {
+        mockGetTabs.mockResolvedValue([
+            { id: 'server-tab', name: 'Notes', content: 'version-one' },
+        ]);
+
+        const { qc, Wrapper } = createQueryWrapper();
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: Wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current.tabs[0]?.id).toBe('server-tab');
+        });
+
+        act(() => {
+            result.current.updateTabContentLocal('server-tab', 'version-one');
+        });
+        act(() => {
+            result.current.updateTabContentLocal('server-tab', 'version-two');
+        });
+
+        expect(result.current.activeTab.content).toBe('version-two');
+
+        act(() => {
+            qc.setQueryData<Tab[]>(['tabs'], (old) =>
+                old?.map((tab) =>
+                    tab.id === 'server-tab'
+                        ? { ...tab, content: 'version-one' }
+                        : tab,
+                ),
+            );
+            result.current.acknowledgeTabContentSynced(
+                'server-tab',
+                'version-one',
+            );
+        });
+
+        expect(result.current.activeTab.content).toBe('version-two');
+    });
 });
