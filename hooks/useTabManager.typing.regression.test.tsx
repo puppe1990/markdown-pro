@@ -118,6 +118,33 @@ describe('useTabManager typing regression', () => {
         });
     });
 
+    it('recovers local edits when the first server load returns older content', async () => {
+        localStorage.setItem(
+            'markdown-tabs',
+            JSON.stringify([
+                { id: 'server-tab', name: 'Notes', content: 'version-two' },
+            ]),
+        );
+        mockGetTabs.mockResolvedValue([
+            { id: 'server-tab', name: 'Notes', content: 'version-one' },
+        ]);
+
+        const { qc, Wrapper } = createQueryWrapper();
+        const { result } = renderHook(() => useTabManager(), {
+            wrapper: Wrapper,
+        });
+
+        await waitFor(() => {
+            expect(qc.getQueryData<Tab[]>(['tabs'])?.[0]?.content).toBe(
+                'version-one',
+            );
+        });
+
+        await waitFor(() => {
+            expect(result.current.activeTab.content).toBe('version-two');
+        });
+    });
+
     it('keeps typed content on an existing tab when updateTab refetch returns stale empty content', async () => {
         let resolveUpdate!: (tab: Tab) => void;
         mockUpdateTab.mockImplementation(
