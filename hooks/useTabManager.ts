@@ -37,6 +37,7 @@ export function useTabManager() {
     const deleteTabMut = useDeleteTab();
     const openTabMut = useOpenTab();
     const ensuredDefaultTab = useRef(false);
+    const seededLocalEdits = useRef(false);
     const addingTabRef = useRef<string | null>(null);
     const reopeningTabRef = useRef<string | null>(null);
     const [pendingContent, setPendingContent] = useState<
@@ -147,6 +148,32 @@ export function useTabManager() {
                 : queryTabs[0].id;
         });
     }, [queryTabs, isLoading, allTabs, createTabMut]);
+
+    // On first server load, recover edits that only exist in localStorage
+    // (e.g. user typed then reloaded before the 10s debounce synced). Without
+    // this, the stale server snapshot silently overwrites the local draft.
+    useEffect(() => {
+        if (seededLocalEdits.current) return;
+        if (isLoading || queryTabs === undefined) return;
+        seededLocalEdits.current = true;
+
+        setPendingContent((prev) => {
+            const next = { ...prev };
+            let changed = false;
+            for (const tab of queryTabs) {
+                const local = localTabs.find((t) => t.id === tab.id);
+                if (
+                    local &&
+                    local.content !== tab.content &&
+                    next[tab.id] === undefined
+                ) {
+                    next[tab.id] = local.content;
+                    changed = true;
+                }
+            }
+            return changed ? next : prev;
+        });
+    }, [queryTabs, isLoading, localTabs]);
 
     const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
 
@@ -270,13 +297,24 @@ export function useTabManager() {
         [qc, localTabs],
     );
 
-    const acknowledgeTabContentSynced = useCallback((id: string) => {
-        setPendingContent((prev) => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-        });
-    }, []);
+    const acknowledgeTabContentSynced = useCallback(
+        (id: string, syncedContent?: string) => {
+            setPendingContent((prev) => {
+                const pending = prev[id];
+                if (
+                    pending !== undefined &&
+                    syncedContent !== undefined &&
+                    pending !== syncedContent
+                ) {
+                    return prev;
+                }
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+        },
+        [],
+    );
 
     const openSavedDocument = useCallback(
         (id: string) => {

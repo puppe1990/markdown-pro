@@ -100,6 +100,48 @@ describe('useDebouncedSync', () => {
         expect(result.current.syncStatus).toBe('saved');
     });
 
+    it('stays pending and re-syncs when content changes during an in-flight sync', async () => {
+        let resolveFirst!: () => void;
+        const onSync = vi
+            .fn()
+            .mockImplementationOnce(
+                () =>
+                    new Promise<void>((resolve) => {
+                        resolveFirst = resolve;
+                    }),
+            )
+            .mockResolvedValue(undefined);
+
+        const { result, rerender } = renderHook(
+            ({ content }) => useDebouncedSync('tab-1', content, onSync, 10000),
+            { initialProps: { content: '# v1' } },
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(150);
+        });
+        act(() => {
+            vi.advanceTimersByTime(10000);
+        });
+        expect(onSync).toHaveBeenCalledWith('tab-1', '# v1');
+
+        rerender({ content: '# v2' });
+        act(() => {
+            vi.advanceTimersByTime(150);
+        });
+
+        await act(async () => {
+            resolveFirst();
+        });
+
+        expect(result.current.syncStatus).toBe('pending');
+
+        act(() => {
+            vi.advanceTimersByTime(10000);
+        });
+        expect(onSync).toHaveBeenCalledWith('tab-1', '# v2');
+    });
+
     it('sets status to error when sync fails', async () => {
         const onSync = vi.fn().mockRejectedValue(new Error('network error'));
 

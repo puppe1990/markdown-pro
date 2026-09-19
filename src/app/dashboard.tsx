@@ -107,7 +107,7 @@ function DashboardPage() {
     const syncToServer = useCallback(
         async (id: string, content: string) => {
             await updateTabMut.mutateAsync({ data: { id, content } });
-            acknowledgeTabContentSynced(id);
+            acknowledgeTabContentSynced(id, content);
             saveVersionMut.mutate({ data: { tabId: id, content } });
         },
         [updateTabMut, saveVersionMut, acknowledgeTabContentSynced],
