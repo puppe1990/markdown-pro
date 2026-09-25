@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
-import netlify from '@netlify/vite-plugin-tanstack-start';
+import { nitro } from 'nitro/vite';
 import viteReact from '@vitejs/plugin-react';
 import tsConfigPaths from 'vite-tsconfig-paths';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -28,7 +28,7 @@ export default defineConfig({
                 routeFileIgnorePattern: '\\.test\\.',
             },
         }),
-        netlify(),
+        nitro(),
         viteReact(),
         VitePWA({
             registerType: 'autoUpdate',
