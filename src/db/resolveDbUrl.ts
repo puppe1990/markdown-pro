@@ -59,6 +59,15 @@ export function resolveLocalDbPath(): string {
 }
 
 export function resolveDatabaseConfig(): DatabaseConfig {
+    const databasePath = process.env.DATABASE_PATH?.trim();
+    if (databasePath) {
+        const url =
+            databasePath.startsWith('file:') || databasePath === ':memory:'
+                ? databasePath
+                : `file:${databasePath}`;
+        return { url: normalizeLocalDatabaseUrl(url) };
+    }
+
     const databaseUrl = process.env.DATABASE_URL?.trim();
 
     // Explicit local DATABASE_URL wins over Turso so dev can keep both in .env.

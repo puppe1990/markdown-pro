@@ -39,6 +39,7 @@ describe('resolveDatabaseConfig', () => {
         process.env.TURSO_DATABASE_URL = 'libsql://example.turso.io';
         process.env.TURSO_AUTH_TOKEN = 'secret-token';
         delete process.env.DATABASE_URL;
+        delete process.env.DATABASE_PATH;
 
         expect(resolveDatabaseConfig()).toEqual({
             url: 'libsql://example.turso.io',
@@ -46,9 +47,25 @@ describe('resolveDatabaseConfig', () => {
         });
     });
 
+    it('prefers DATABASE_PATH over Turso when both are set', () => {
+        process.env.TURSO_DATABASE_URL = 'libsql://example.turso.io';
+        process.env.TURSO_AUTH_TOKEN = 'secret-token';
+        process.env.DATABASE_PATH = './data/path-priority.sqlite';
+        delete process.env.DATABASE_URL;
+
+        const config = resolveDatabaseConfig();
+        const expected = path.resolve(
+            process.cwd(),
+            'data/path-priority.sqlite',
+        );
+        expect(config.url).toBe(`file:${expected}`);
+        expect(config.authToken).toBeUndefined();
+    });
+
     it('prefers local DATABASE_URL over Turso when both are set', () => {
         process.env.TURSO_DATABASE_URL = 'libsql://example.turso.io';
         process.env.TURSO_AUTH_TOKEN = 'secret-token';
+        delete process.env.DATABASE_PATH;
         process.env.DATABASE_URL = 'file:./data/local-priority.sqlite';
 
         const config = resolveDatabaseConfig();
@@ -60,6 +77,7 @@ describe('resolveDatabaseConfig', () => {
     it('normalizes local DATABASE_URL to an absolute file path', () => {
         delete process.env.TURSO_DATABASE_URL;
         delete process.env.TURSO_AUTH_TOKEN;
+        delete process.env.DATABASE_PATH;
         process.env.DATABASE_URL = 'file:./data/test.sqlite';
 
         const config = resolveDatabaseConfig();
@@ -71,6 +89,7 @@ describe('resolveDatabaseConfig', () => {
         delete process.env.TURSO_DATABASE_URL;
         delete process.env.TURSO_AUTH_TOKEN;
         delete process.env.DATABASE_URL;
+        delete process.env.DATABASE_PATH;
         delete process.env.NETLIFY;
         delete process.env.AWS_LAMBDA_FUNCTION_NAME;
 
@@ -83,6 +102,7 @@ describe('resolveDatabaseConfig', () => {
         delete process.env.TURSO_DATABASE_URL;
         delete process.env.TURSO_AUTH_TOKEN;
         delete process.env.DATABASE_URL;
+        delete process.env.DATABASE_PATH;
         process.env.NETLIFY = 'true';
 
         expect(resolveDatabaseConfig()).toEqual({
