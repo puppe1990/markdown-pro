@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import type { Client } from '@libsql/client';
+import { createClient, type Client } from '@libsql/client';
 
 vi.mock('@/src/db/resolveDbUrl', () => ({
     resolveDatabaseConfig: vi.fn(),
@@ -25,5 +25,20 @@ describe('migrateAppSchema', () => {
         await migrateAppSchema(db);
 
         expect(execute).not.toHaveBeenCalled();
+    });
+
+    it('applies the bundled schema to a local SQLite database', async () => {
+        vi.mocked(resolveDatabaseConfig).mockReturnValue({
+            url: 'file::memory:',
+        });
+        const localDb = createClient({ url: 'file::memory:' });
+
+        await migrateAppSchema(localDb);
+        const tabsTable = await localDb.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tabs'",
+        );
+
+        expect(tabsTable.rows).toHaveLength(1);
+        localDb.close();
     });
 });

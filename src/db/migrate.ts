@@ -1,14 +1,11 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import type { Client } from '@libsql/client';
 import {
     resolveDatabaseConfig,
     type DatabaseConfig,
 } from '@/src/db/resolveDbUrl';
+import schemaSql from '@/src/db/schema.sql?raw';
 
-const schemaPath = path.resolve(import.meta.dirname, 'schema.sql');
-
-/** Remote Turso DBs are migrated via CLI/CI; schema.sql is not bundled on Netlify. */
+/** Remote Turso DBs are provisioned separately via CLI/CI. */
 function isRemoteDatabase(config: DatabaseConfig): boolean {
     return (
         config.url.startsWith('libsql://') ||
@@ -73,8 +70,7 @@ async function migratePreferencesThemeSystem(db: Client): Promise<void> {
 
 /**
  * Runs incremental migrations (safe to call on every DB access).
- * Runs on remote Turso too — only migrateAppSchema skips remote (schema.sql
- * is not bundled on Netlify).
+ * Runs on remote Turso too; only migrateAppSchema skips remote databases.
  */
 export async function runPendingMigrations(db: Client): Promise<void> {
     await migratePreferencesThemeSystem(db);
@@ -87,8 +83,7 @@ export async function migrateAppSchema(db: Client): Promise<void> {
         return;
     }
 
-    const sql = fs.readFileSync(schemaPath, 'utf-8');
-    const statements = sql
+    const statements = schemaSql
         .split(';')
         .map((statement) => statement.trim())
         .filter((statement) => statement.length > 0);

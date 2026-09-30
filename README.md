@@ -72,6 +72,9 @@ Create a `.env` file based on `.env.example`:
 # Local SQLite (default — no Turso account needed)
 DATABASE_URL=file:./data/markdown-pro.sqlite
 
+# Cleat persistent volume for the markdown-pro app:
+# DATABASE_URL=file:/opt/markdown-pro/data/markdown.db
+
 # Production Turso (uncomment and remove DATABASE_URL to use remote DB)
 # TURSO_DATABASE_URL=libsql://your-db.turso.io
 # TURSO_AUTH_TOKEN=your-token
