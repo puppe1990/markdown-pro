@@ -5,11 +5,12 @@ import {
     DownloadIcon,
     UploadIcon,
     CopyIcon,
+    FolderOpenIcon,
     CheckIcon,
     FileTextIcon,
     FileIcon,
     FileImage,
-    BookOpenIcon,
+    EyeIcon,
     UserIcon,
     SaveIcon,
     SpinnerIcon,
@@ -232,11 +233,11 @@ const Header: React.FC<HeaderProps> = ({
                     )}
                 </IconTooltipButton>
                 <IconTooltipButton
-                    tooltip="Saved documents"
+                    tooltip="Open saved documents"
                     onClick={onSavedDocumentsClick}
                     className={btnIcon}
                 >
-                    <SaveIcon className="w-5 h-5" />
+                    <FolderOpenIcon className="w-5 h-5" />
                 </IconTooltipButton>
                 <IconTooltipButton
                     tooltip="Version History"
@@ -252,7 +253,7 @@ const Header: React.FC<HeaderProps> = ({
                     onClick={onReadingModeToggle}
                     className={isReadingMode ? btnIconActive : btnIcon}
                 >
-                    <BookOpenIcon className="w-5 h-5" />
+                    <EyeIcon className="w-5 h-5" />
                 </IconTooltipButton>
                 {syncStatus && (
                     <IconTooltipButton

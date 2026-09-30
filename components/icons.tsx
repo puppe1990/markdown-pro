@@ -314,6 +314,25 @@ export const CopyIcon = (props: React.SVGProps<SVGSVGElement>) => (
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
     </svg>
 );
+
+export const FolderOpenIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+    >
+        <path d="M6 14h12l-1.5 6h-13z" />
+        <path d="M3.5 20V5a2 2 0 0 1 2-2h4l2 3h7a2 2 0 0 1 2 2v3" />
+    </svg>
+);
+
 export const CheckIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"

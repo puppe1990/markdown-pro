@@ -64,6 +64,33 @@ describe('Header', () => {
         ).toBeTruthy();
     });
 
+    it('uses distinct icons for saved documents and saving changes', () => {
+        render(
+            <Header
+                themePreference="light"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
+                onHistoryClick={vi.fn()}
+                onSavedDocumentsClick={vi.fn()}
+                onReadingModeToggle={vi.fn()}
+                isReadingMode={false}
+                markdownContent=""
+                onImportMarkdown={vi.fn()}
+                syncStatus="pending"
+            />,
+        );
+
+        const savedIcon = screen
+            .getByRole('button', { name: 'Open saved documents' })
+            .querySelector('svg');
+        const saveIcon = screen
+            .getByRole('button', { name: 'Save changes' })
+            .querySelector('svg');
+
+        expect(savedIcon?.innerHTML).not.toBe(saveIcon?.innerHTML);
+    });
+
     it('shows save icon when syncStatus is pending', () => {
         render(
             <Header
