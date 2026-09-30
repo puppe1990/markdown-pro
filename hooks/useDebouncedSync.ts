@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 const STORAGE_KEY = 'markdown-tabs';
 const LOCAL_DEBOUNCE_MS = 150;
+const AUTO_RETRY_DELAY_MS = 3000;
+const MAX_SYNC_FAILURES = 3;
 
-export type SyncStatus = 'saved' | 'pending' | 'saving' | 'error';
+export type SyncStatus = 'saved' | 'pending' | 'saving' | 'retrying' | 'error';
 
 export function useDebouncedSync(
     activeTabId: string,
@@ -12,8 +14,10 @@ export function useDebouncedSync(
     delay = 10000,
 ) {
     const [syncStatus, setSyncStatus] = useState<SyncStatus>('saved');
+    const [retrySequence, setRetrySequence] = useState(0);
     const onSyncRef = useRef(onSync);
     const syncInProgressRef = useRef(false);
+    const syncFailureCountRef = useRef(0);
     const activeTabIdRef = useRef(activeTabId);
     const contentRef = useRef(content);
 
@@ -49,6 +53,7 @@ export function useDebouncedSync(
             setSyncStatus('saving');
             try {
                 await onSyncRef.current(tabId, syncContent);
+                syncFailureCountRef.current = 0;
                 // If the user kept typing while this sync was in flight, stay
                 // pending so the debounce re-syncs the newer content instead of
                 // reporting "saved" and cancelling the scheduled sync.
@@ -56,7 +61,13 @@ export function useDebouncedSync(
                     contentRef.current === syncContent ? 'saved' : 'pending',
                 );
             } catch {
-                setSyncStatus('error');
+                syncFailureCountRef.current += 1;
+                if (syncFailureCountRef.current < MAX_SYNC_FAILURES) {
+                    setSyncStatus('retrying');
+                    setRetrySequence((sequence) => sequence + 1);
+                } else {
+                    setSyncStatus('error');
+                }
             } finally {
                 syncInProgressRef.current = false;
             }
@@ -66,6 +77,7 @@ export function useDebouncedSync(
 
     useEffect(() => {
         const localTimer = setTimeout(() => {
+            syncFailureCountRef.current = 0;
             saveToLocalStorage(content);
             setSyncStatus('pending');
         }, LOCAL_DEBOUNCE_MS);
@@ -107,17 +119,36 @@ export function useDebouncedSync(
         }
     }, [activeTabId]);
 
+    const syncLatest = useCallback(
+        async (resetFailures: boolean) => {
+            if (syncInProgressRef.current) return;
+            if (resetFailures) syncFailureCountRef.current = 0;
+
+            const tabId = activeTabIdRef.current;
+            saveToLocalStorage(contentRef.current);
+
+            const tabs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const tab = tabs.find((t: { id: string }) => t.id === tabId);
+            if (!tab) return;
+            await performSync(tabId, tab.content);
+        },
+        [saveToLocalStorage, performSync],
+    );
+
+    useEffect(() => {
+        if (syncStatus !== 'retrying') return;
+
+        const retryTimer = setTimeout(() => {
+            void syncLatest(false);
+        }, AUTO_RETRY_DELAY_MS);
+
+        return () => clearTimeout(retryTimer);
+    }, [retrySequence, syncLatest, syncStatus]);
+
     const syncNow = useCallback(async () => {
         if (syncInProgressRef.current) return;
-
-        const tabId = activeTabIdRef.current;
-        saveToLocalStorage(contentRef.current);
-
-        const tabs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        const tab = tabs.find((t: { id: string }) => t.id === tabId);
-        if (!tab) return;
-        await performSync(tabId, tab.content);
-    }, [saveToLocalStorage, performSync]);
+        await syncLatest(true);
+    }, [syncLatest]);
 
     return { syncStatus, syncNow };
 }

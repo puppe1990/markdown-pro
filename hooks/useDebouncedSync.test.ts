@@ -142,7 +142,32 @@ describe('useDebouncedSync', () => {
         expect(onSync).toHaveBeenCalledWith('tab-1', '# v2');
     });
 
-    it('sets status to error when sync fails', async () => {
+    it('retries transient sync failures and recovers automatically', async () => {
+        const onSync = vi
+            .fn()
+            .mockRejectedValueOnce(new Error('network error'))
+            .mockResolvedValue(undefined);
+
+        const { result } = renderHook(
+            ({ content }) => useDebouncedSync('tab-1', content, onSync, 10000),
+            { initialProps: { content: '# Hello' } },
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(150);
+        });
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(10000);
+        });
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(3000);
+        });
+
+        expect(onSync).toHaveBeenCalledTimes(2);
+        expect(result.current.syncStatus).toBe('saved');
+    });
+
+    it('sets status to error after automatic retries are exhausted', async () => {
         const onSync = vi.fn().mockRejectedValue(new Error('network error'));
 
         const { result } = renderHook(
@@ -154,14 +179,17 @@ describe('useDebouncedSync', () => {
             vi.advanceTimersByTime(150);
         });
 
-        act(() => {
-            vi.advanceTimersByTime(10000);
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(10000);
         });
-
+        await act(async () => {
+            await vi.runAllTimersAsync();
+        });
         await act(async () => {
             await vi.runAllTimersAsync();
         });
 
+        expect(onSync).toHaveBeenCalledTimes(3);
         expect(result.current.syncStatus).toBe('error');
     });
 

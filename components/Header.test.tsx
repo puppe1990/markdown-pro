@@ -113,6 +113,30 @@ describe('Header', () => {
         ).toBeTruthy();
     });
 
+    it('explains that an interrupted connection will retry automatically', () => {
+        render(
+            <Header
+                themePreference="light"
+                onThemePreferenceChange={vi.fn()}
+                accentColor="teal"
+                onAccentColorChange={vi.fn()}
+                onHistoryClick={vi.fn()}
+                onSavedDocumentsClick={vi.fn()}
+                onReadingModeToggle={vi.fn()}
+                isReadingMode={false}
+                markdownContent=""
+                onImportMarkdown={vi.fn()}
+                syncStatus="retrying"
+            />,
+        );
+
+        expect(
+            screen.getByRole('button', {
+                name: 'Connection interrupted. Retrying automatically...',
+            }),
+        ).toBeInTheDocument();
+    });
+
     it('calls onSyncClick when sync button is clicked and status is pending', async () => {
         const onSyncClick = vi.fn();
 

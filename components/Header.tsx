@@ -182,9 +182,11 @@ const Header: React.FC<HeaderProps> = ({
     const syncBtnClass =
         syncStatus === 'saved'
             ? 'p-2 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
-            : syncStatus === 'error'
-              ? 'p-2 rounded-lg bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400'
-              : btnIcon;
+            : syncStatus === 'retrying'
+              ? 'p-2 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
+              : syncStatus === 'error'
+                ? 'p-2 rounded-lg bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400'
+                : btnIcon;
 
     return (
         <header
@@ -262,16 +264,19 @@ const Header: React.FC<HeaderProps> = ({
                                 ? 'All changes saved'
                                 : syncStatus === 'saving'
                                   ? 'Saving...'
-                                  : syncStatus === 'error'
-                                    ? 'Sync failed - click to retry'
-                                    : 'Save changes'
+                                  : syncStatus === 'retrying'
+                                    ? 'Connection interrupted. Retrying automatically...'
+                                    : syncStatus === 'error'
+                                      ? "Couldn't save changes. Your draft is safe locally. Click to retry."
+                                      : 'Save changes'
                         }
                         onClick={onSyncClick}
                         className={syncBtnClass}
                     >
                         {syncStatus === 'saved' ? (
                             <CheckIcon className="w-5 h-5" />
-                        ) : syncStatus === 'saving' ? (
+                        ) : syncStatus === 'saving' ||
+                          syncStatus === 'retrying' ? (
                             <SpinnerIcon className="w-5 h-5" />
                         ) : (
                             <SaveIcon className="w-5 h-5" />
